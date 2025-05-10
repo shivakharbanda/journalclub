@@ -21,9 +21,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
+    path('', include('journal_club.urls')),
     path("admin/", admin.site.urls),
     path("api/user/bla-bla/", include("users.urls")),
-    path('journal/', include('journal_club.urls')),
+    
 ]
 
 # Serve media files in dev

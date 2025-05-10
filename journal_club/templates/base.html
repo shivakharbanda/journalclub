@@ -15,7 +15,7 @@
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div class="container">
-            <a class="navbar-brand" href="/journal/">JournalClub</a>
+            <a class="navbar-brand" href="{% url 'episode_list' %}">JournalClub</a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -24,11 +24,11 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/journal/">Episodes</a>
+                        <a class="nav-link" href="{% url 'episode_list' %}">Episodes</a>
                     </li>
                 </ul>
 
-                <form class="d-flex" method="get" action="/journal/">
+                <form class="d-flex" method="get" action="{% url 'episode_list' %}">
                     <input class="form-control me-2" type="search" name="q" placeholder="Search..." aria-label="Search">
                     <button class="btn btn-outline-light" type="submit">Search</button>
                 </form>

@@ -28,6 +28,9 @@ COPY . .
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
+# Run migrations
+RUN python manage.py migrate --noinput
+
 # Expose port for gunicorn
 EXPOSE 8000
 
