@@ -1,0 +1,81 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+*.pyo
+*.pyd
+*.pyd
+
+# Django
+*.sqlite3
+db.sqlite3
+*.log
+*.pot
+*.pyc
+local_settings.py
+.env
+
+# Environments
+.env
+.venv/
+venv/
+ENV/
+env/
+.Python
+
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
+
+# macOS
+.DS_Store
+
+# Byte-compiled files
+*.so
+
+# Pip
+pip-log.txt
+
+# Coverage
+htmlcov/
+.coverage
+.tox/
+.nox/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+
+# Media files (if you store media on disk)
+media/
+staticfiles/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# Sentry
+.sentrycli
+
+# Logs
+*.log
+
+# Other IDEs / editors
+*.sublime-project
+*.sublime-workspace
+*.idea/
