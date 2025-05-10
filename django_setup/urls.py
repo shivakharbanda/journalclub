@@ -17,9 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.urls import include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("user/", include("users.urls")),
-    path("video_lab/", include("video_lab.urls"))
+    path("api/user/", include("users.urls")),
+    path('journal/', include('journal_club.urls')),
 ]
+
+# Serve media files in dev
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

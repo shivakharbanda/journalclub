@@ -12,6 +12,8 @@ python-decouple = "^3.8"
 djangorestframework = "^3.16.0"
 djangorestframework-simplejwt = "^5.5.0"
 psycopg2 = "^2.9.10"
+huggingface-hub = "^0.31.1"
+django-markdownify = "^0.9.5"
 
 
 [build-system]
