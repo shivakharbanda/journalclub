@@ -15,6 +15,7 @@ psycopg2 = "^2.9.10"
 huggingface-hub = "^0.31.1"
 django-markdownify = "^0.9.5"
 gunicorn = "^23.0.0"
+whitenoise = "^6.9.0"
 
 
 [build-system]
