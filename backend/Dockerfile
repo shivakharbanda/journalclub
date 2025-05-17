@@ -26,6 +26,9 @@ RUN poetry config virtualenvs.create false && poetry install --no-root --no-inte
 COPY . .
 
 EXPOSE 8000
+
+ENV PYTHONPATH=/app
+
 # Debug block
 RUN echo "=== DEBUG: Current working directory ===" \
  && pwd \
