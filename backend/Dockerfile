@@ -27,7 +27,7 @@ COPY . .
 
 EXPOSE 8000
 
-ENV PYTHONPATH=/app
+ENV PYTHONPATH="/app:${PYTHONPATH}"
 
 # Debug block
 RUN echo "=== DEBUG: Current working directory ===" \
