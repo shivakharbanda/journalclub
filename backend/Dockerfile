@@ -27,14 +27,18 @@ COPY . .
 
 EXPOSE 8000
 # Debug block
-RUN echo "=== DEBUG: /app contents ===" \
- && ls -la /app || echo "ls failed" \
- && echo "=== DEBUG: full tree under /app ===" \
- && find /app || echo "find failed" \
+RUN echo "=== DEBUG: Current working directory ===" \
+ && pwd \
+ && echo "=== DEBUG: /app contents ===" \
+ && ls -la /app \
+ && echo "=== DEBUG: Recursive structure under /app ===" \
+ && find /app \
+ && echo "=== DEBUG: Does django_setup/ exist? ===" \
+ && [ -d /app/django_setup ] && echo "Yes, it's there." || echo "Nope, missing." \
+ && echo "=== DEBUG: Does wsgi.py exist? ===" \
+ && [ -f /app/django_setup/wsgi.py ] && echo "Yes, it exists." || echo "Nope, missing." \
  && echo "=== DEBUG: Python sys.path ===" \
- && python3 -c "import sys; print('\n'.join(sys.path))" || echo "sys.path failed" \
- && echo "=== DEBUG: trying import" \
- && python3 -c "import django_setup.wsgi" || echo "import failed"
+ && python3 -c "import sys; print('\n'.join(sys.path))"
 
 # Start Django app using gunicorn
 CMD ["gunicorn", "django_setup.wsgi:application", "--bind", "0.0.0.0:8000"]
