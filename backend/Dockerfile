@@ -26,7 +26,11 @@ RUN poetry config virtualenvs.create false && poetry install --no-root --no-inte
 COPY . .
 
 EXPOSE 8000
-ENV PYTHONPATH=/app
+# Debug block
+RUN echo "=== DEBUG: listing /app ===" && ls -la /app \
+ && echo "=== DEBUG: listing /app/django_setup ===" && ls -la /app/django_setup \
+ && echo "=== DEBUG: Python paths ===" && python3 -c "import sys; print('\n'.join(sys.path))" \
+ && echo "=== DEBUG: Try import ===" && python3 -c "import django_setup.wsgi"
 
 # Start Django app using gunicorn
 CMD ["gunicorn", "django_setup.wsgi:application", "--bind", "0.0.0.0:8000"]
