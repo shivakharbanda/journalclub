@@ -95,6 +95,7 @@ DATABASES = {
     }
 }
 
+
 # import os
 # DATABASES = {
 #     "default": {
