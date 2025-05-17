@@ -9,6 +9,9 @@ from rest_framework.response import Response
 
 from django.shortcuts import render, get_object_or_404
 
+import logging
+logger = logging.getLogger('journal_club')
+
 @api_view(['GET'])
 def ping(request):
     return Response({"message": "pong"})
