@@ -26,6 +26,7 @@ RUN poetry config virtualenvs.create false && poetry install --no-root --no-inte
 COPY . .
 
 EXPOSE 8000
+ENV PYTHONPATH=/app
 
 # Start Django app using gunicorn
 CMD ["gunicorn", "django_setup.wsgi:application", "--bind", "0.0.0.0:8000"]
