@@ -5,20 +5,24 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    // DropdownMenuLabel,
-    // DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronDown } from 'lucide-react'
+import { Input } from "@/components/ui/input"
+import { ChevronDown, Search } from 'lucide-react'
 import { AppLogo } from './app-logo'
 import { AppSidebar } from './app-sidebar'
-// import { Button, buttonVariants } from './ui/button'
-// import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-// import { appConfig, baseUrl } from '@/config/app'
-// import GitHub from './icons/github'
 
-export function AppHeader() {
+interface AppHeaderProps {
+    onSearch?: (query: string) => void
+    searchValue?: string
+}
+
+export function AppHeader({ onSearch, searchValue = '' }: AppHeaderProps) {
     const location = useLocation()
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        onSearch?.(e.target.value)
+    }
 
     return (
         <header className="bg-background sticky top-0 z-50 border-b">
@@ -31,8 +35,9 @@ export function AppHeader() {
                 </div>
 
                 <div className='ml-4 flex-1 flex items-center justify-between'>
-                    <div className='flex-1'>
-                        <nav className="hidden md:flex gap-1">
+                    {/* Navigation - hidden on smaller screens when search is present */}
+                    <div className='hidden lg:block'>
+                        <nav className="flex gap-1">
                             {mainMenu.map((item, index) => (
                                 (item.items && item.items.length > 0) ? (
                                     <DropdownMenu key={index}>
@@ -81,7 +86,34 @@ export function AppHeader() {
                             ))}
                         </nav>
                     </div>
-                    {/* <nav className="flex gap-1">
+
+                    {/* Search Bar - centered and responsive */}
+                    <div className='flex-1 max-w-md mx-4 lg:mx-8'>
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="search"
+                                placeholder="Search episodes, topics, tags..."
+                                className="pl-8 h-9 bg-muted/50 border-0 focus-visible:ring-1"
+                                value={searchValue}
+                                onChange={handleSearchChange}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Right side - placeholder for future user menu */}
+                    <div className='w-8'>
+                        {/* Future: User avatar/menu */}
+                    </div>
+                </div>
+            </div>
+        </header>
+    )
+}
+
+
+
+/*{ <nav className="flex gap-1">
                         
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -107,9 +139,4 @@ export function AppHeader() {
                                 <DropdownMenuItem>Log out</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                    </nav> */}
-                </div>
-            </div>
-        </header >
-    )
-}
+                    </nav> }*/
