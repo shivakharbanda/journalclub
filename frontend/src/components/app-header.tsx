@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input"
 import { ChevronDown, Search } from 'lucide-react'
 import { AppLogo } from './app-logo'
 import { AppSidebar } from './app-sidebar'
+import { useAuth } from '@/contexts/AuthContext'
+import { Button } from '@mui/material'
 
 interface AppHeaderProps {
     onSearch?: (query: string) => void
@@ -23,6 +25,8 @@ export function AppHeader({ onSearch, searchValue = '' }: AppHeaderProps) {
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         onSearch?.(e.target.value)
     }
+
+    const { isAuthenticated, logout } = useAuth()
 
     return (
         <header className="bg-background sticky top-0 z-50 border-b">
@@ -102,9 +106,33 @@ export function AppHeader({ onSearch, searchValue = '' }: AppHeaderProps) {
                     </div>
 
                     {/* Right side - placeholder for future user menu */}
-                    <div className='w-8'>
-                        {/* Future: User avatar/menu */}
+                    <div className="flex items-center space-x-2">
+                        {isAuthenticated ? (
+                            <Button
+                                variant="text"
+                                size="small"
+                                onClick={logout}
+                                className="text-sm font-medium"
+                                sx={{ textTransform: 'none' }}
+                            >
+                                Sign out
+                            </Button>
+                        ) : (
+                            <>
+                                <Link to="/login">
+                                    <Button variant="text" size="small" className="text-sm font-medium" sx={{ textTransform: 'none' }}>
+                                        Sign in
+                                    </Button>
+                                </Link>
+                                <Link to="/register">
+                                    <Button variant="outlined" size="small" className="text-sm font-medium" sx={{ textTransform: 'none' }}>
+                                        Sign up
+                                    </Button>
+                                </Link>
+                            </>
+                        )}
                     </div>
+
                 </div>
             </div>
         </header>
