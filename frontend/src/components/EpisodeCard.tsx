@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { Card, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Link } from "react-router-dom"
 import ReactMarkdown from "react-markdown"
+import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled"
 
 import TagsList from "./TagsList"
 import TopicsList from "./TopicsList"
@@ -39,43 +39,59 @@ type Props = {
 export default function EpisodeCard({ episode }: Props) {
     const [expanded, setExpanded] = useState(false)
 
-    const summary = expanded
-        ? episode.summary_text
-        : episode.summary_text.slice(0, 300) + "..."
+    const needsTruncation = episode.summary_text.length > 300
 
     return (
-        <Card className="bg-card border border-border shadow-lg hover:scale-[1.01] transition-transform duration-200">
-            <img
-                src={episode.image}
-                alt={episode.title}
-                className="w-full h-48 object-cover rounded-t-md"
-            />
+        <Card className="bg-card border border-border shadow-sm hover:scale-[1.005] transition-transform duration-200">
+            {/* Image with Play Overlay */}
+            <Link to={`/episodes/${episode.slug}`} className="relative block group">
+                <img
+                    src={episode.image}
+                    alt={episode.title}
+                    className="w-full h-36 object-cover rounded-t-md"
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-t-md">
+                    <PlayCircleFilledIcon
+                        className="text-white drop-shadow-lg"
+                        style={{ fontSize: '2.5rem' }}
+                    />
+                </div>
+            </Link>
 
-            <div className="px-4 py-3 space-y-2">
-                <CardTitle className="text-amber-400 text-lg font-semibold">
-                    {episode.title}
-                </CardTitle>
-
-                <CardDescription className="prose max-w-none text-muted-foreground text-sm">
-                    <ReactMarkdown>{summary}</ReactMarkdown>
-                </CardDescription>
-
-                <div>
-                    <TopicsList topics={episode.topics} />
-                    <TagsList tags={episode.tags} />
+            <div className="px-3 py-2 space-y-2">
+                <div className="flex flex-col gap-0.5">
+                    <CardTitle className="text-amber-400 text-base font-semibold leading-snug">
+                        {episode.title}
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground leading-tight">
+                        {new Intl.DateTimeFormat("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric"
+                        }).format(new Date(episode.created_at))}
+                    </p>
                 </div>
 
-                <div className="flex justify-between items-center pt-3">
-                    <button
-                        onClick={() => setExpanded(!expanded)}
-                        className="text-sm text-primary hover:underline"
-                    >
-                        {expanded ? "Show less" : "Read more"}
-                    </button>
+                <CardDescription className="text-muted-foreground text-sm leading-snug">
+                    <ReactMarkdown>
+                        {expanded
+                            ? episode.summary_text
+                            : `${episode.summary_text.slice(0, 300).trim()}...`}
+                    </ReactMarkdown>
 
-                    <Link to={`/episodes/${episode.slug}`}>
-                        <Button size="sm">Listen</Button>
-                    </Link>
+                    {needsTruncation && (
+                        <button
+                            onClick={() => setExpanded(!expanded)}
+                            className="text-primary hover:underline font-medium ml-1"
+                        >
+                            {expanded ? "Show less" : "Read more"}
+                        </button>
+                    )}
+                </CardDescription>
+
+                <div className="pt-1">
+                    <TopicsList topics={episode.topics} />
+                    <TagsList tags={episode.tags} />
                 </div>
             </div>
         </Card>
