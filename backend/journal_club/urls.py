@@ -2,15 +2,25 @@ from django.urls import path
 from .views import (
     EpisodeListCreateView,
     EpisodeDetailView,
-    episode_list_view,
-    episode_detail_view,
     ping,
+    TopicListCreateView,
+    TopicDetailView,
+    EpisodeTagManageView,
+    TagDetailView,
 )
 
 urlpatterns = [
+    # Episodes
     path('api/episodes/', EpisodeListCreateView.as_view(), name='episode-list-create'),
     path('api/episode/<slug:slug>/', EpisodeDetailView.as_view(), name='episode-detail'),
-    path('', episode_list_view, name='episode_list'),
-    path('episode/<slug:slug>/', episode_detail_view, name='episode_detail'),
-    path('api/ping/', ping),
+    path('api/episode/<slug:slug>/tags/', EpisodeTagManageView.as_view(), name='episode-tag-manage'),
+
+    # Topics
+    path('api/topics/', TopicListCreateView.as_view(), name='topic-list-create'),
+    path('api/topics/<slug:slug>/', TopicDetailView.as_view(), name='topic-detail'),
+
+    path('api/tags/<slug:slug>/', TagDetailView.as_view(), name='tag-detail'),
+
+    # Ping
+    path('api/ping/', ping, name='ping'),
 ]

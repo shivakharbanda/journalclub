@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "users",
     "journal_club",
     'corsheaders',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
@@ -146,13 +147,11 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'users.authentication.CustomAuthentication',  # <== correct path
     ),
 }
-
 AUTH_USER_MODEL = 'users.CustomUser'
 
 
@@ -161,8 +160,9 @@ from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=60),
-    'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': False,
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+
     'UPDATE_LAST_LOGIN': False,
 
     'ALGORITHM': 'HS256',
@@ -170,6 +170,15 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+
+    # Add these for cookie-based setup
+    'AUTH_COOKIE': 'access_token',           # Cookie name
+    'AUTH_COOKIE_DOMAIN': None,              # Or your domain: 'yourdomain.com'
+    'AUTH_COOKIE_SECURE': False,             # True in production (for HTTPS only)
+    'AUTH_COOKIE_HTTP_ONLY': True,           # Prevents JS access
+    'AUTH_COOKIE_PATH': '/',                 
+    'AUTH_COOKIE_SAMESITE': 'Lax',           # Can be 'Strict', 'Lax', or None
+    'AUTH_COOKIE_REFRESH': 'refresh_token', 
 }
 
 MEDIA_URL = "/media/"
@@ -210,13 +219,13 @@ LOGGING = {
 
     'handlers': {
         'file': {
-            'level': 'DEBUG',
+            'level': 'ERROR',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'django-debug.log'),
             'formatter': 'verbose',
         },
         'console': {
-            'level': 'DEBUG',
+            'level': 'ERROR',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
@@ -225,12 +234,12 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['file', 'console'],
-            'level': 'DEBUG',
+            'level': 'ERROR',
             'propagate': True,
         },
         'journal_club': {
             'handlers': ['file', 'console'],
-            'level': 'DEBUG',
+            'level': 'ERROR',
             'propagate': True,
         },
     },
