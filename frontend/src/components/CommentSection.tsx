@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { format } from "date-fns"
 import { fetcher } from "@/lib/api"
 
@@ -28,11 +28,211 @@ type Comment = {
 }
 
 type CommentsProps = {
-  objectType: string // e.g., 'episode'
+  objectType: string
   objectId: number
   className?: string
 }
 
+type CommentItemProps = {
+  comment: Comment
+  isReply?: boolean
+  onReply: (parentId: number) => void
+  onToggleReplies: (commentId: number) => void
+  replyingTo: number | null
+  onSetReplyingTo: (id: number | null) => void
+  replyContent: string
+  onSetReplyContent: (content: string) => void
+  submitting: boolean
+  loadingReplies: number[]
+  isAuthenticated: boolean
+}
+
+type CommentFormProps = {
+  placeholder: string
+  value: string
+  onChange: (value: string) => void
+  onSubmit: () => void
+  onCancel?: () => void
+  submitting: boolean
+  showCancel?: boolean
+}
+
+// Reusable Comment Form Component
+function CommentForm({ 
+  placeholder, 
+  value, 
+  onChange, 
+  onSubmit, 
+  onCancel, 
+  submitting, 
+  showCancel = false 
+}: CommentFormProps) {
+  return (
+    <div className="space-y-3">
+      <Textarea
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`resize-none ${showCancel ? 'min-h-[80px]' : 'min-h-[100px]'}`}
+        disabled={submitting}
+      />
+      <div className="flex gap-2 justify-end">
+        {showCancel && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onCancel}
+            disabled={submitting}
+          >
+            Cancel
+          </Button>
+        )}
+        <Button
+          size="sm"
+          onClick={onSubmit}
+          disabled={!value.trim() || submitting}
+        >
+          {submitting ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-1" />
+          ) : (
+            <Send className="h-4 w-4 mr-1" />
+          )}
+          {showCancel ? 'Reply' : 'Post Comment'}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// Individual Comment Item Component
+function CommentItem({
+  comment,
+  isReply = false,
+  onReply,
+  onToggleReplies,
+  replyingTo,
+  onSetReplyingTo,
+  replyContent,
+  onSetReplyContent,
+  submitting,
+  loadingReplies,
+  isAuthenticated
+}: CommentItemProps) {
+  const getUserInitials = (username: string) => {
+    return username
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
+
+  const handleToggleReply = () => {
+    if (replyingTo === comment.id) {
+      // Closing reply form
+      onSetReplyingTo(null)
+      onSetReplyContent("")
+    } else {
+      // Opening reply form - pre-populate with @username if it's a reply to a reply
+      onSetReplyingTo(comment.id)
+      const mentionText = isReply ? `@${comment.user.username} ` : ""
+      onSetReplyContent(mentionText)
+    }
+  }
+
+  const handleSubmitReply = () => {
+    onReply(comment.id)
+  }
+
+  const handleCancelReply = () => {
+    onSetReplyingTo(null)
+    onSetReplyContent("")
+  }
+
+  return (
+    <div className="flex gap-4">
+      <Avatar className={`flex-shrink-0 ${isReply ? 'h-8 w-8' : 'h-10 w-10'}`}>
+        <AvatarImage src={comment.user.avatar} />
+        <AvatarFallback className={isReply ? 'text-xs' : ''}>
+          {getUserInitials(comment.user.username)}
+        </AvatarFallback>
+      </Avatar>
+      
+      <div className="flex-1 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className={`font-semibold ${isReply ? 'text-sm' : 'text-base'}`}>
+            {comment.user.username}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {format(new Date(comment.created_at), "MMM d, yyyy 'at' h:mm a")}
+          </span>
+        </div>
+        
+        <p className={`text-muted-foreground leading-relaxed ${isReply ? 'text-sm' : ''}`}>
+          {comment.content}
+        </p>
+        
+        <div className="flex items-center gap-4 pt-2">
+          {isAuthenticated ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`text-xs px-2 ${isReply ? 'h-6' : 'h-8'}`}
+              onClick={handleToggleReply}
+            >
+              <Reply className="h-3 w-3 mr-1" />
+              Reply
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`text-xs px-2 ${isReply ? 'h-6' : 'h-8'}`}
+              onClick={() => toast.error('Please log in to reply')}
+            >
+              <Reply className="h-3 w-3 mr-1" />
+              Reply
+            </Button>
+          )}
+          
+          {!isReply && comment.replies_count > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs h-8 px-2"
+              onClick={() => onToggleReplies(comment.id)}
+              disabled={loadingReplies.includes(comment.id)}
+            >
+              {loadingReplies.includes(comment.id) ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <MessageCircle className="h-3 w-3 mr-1" />
+              )}
+              {comment.showReplies ? 'Hide' : 'Show'} {comment.replies_count} {comment.replies_count === 1 ? 'reply' : 'replies'}
+            </Button>
+          )}
+        </div>
+
+        {/* Reply Form */}
+        {replyingTo === comment.id && (
+          <div className="mt-4">
+            <CommentForm
+              placeholder={`Reply to ${comment.user.username}...`}
+              value={replyContent}
+              onChange={onSetReplyContent}
+              onSubmit={handleSubmitReply}
+              onCancel={handleCancelReply}
+              submitting={submitting}
+              showCancel={true}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Main Comments Component
 export default function Comments({ objectType, objectId, className = "" }: CommentsProps) {
   const { isAuthenticated } = useAuth()
   const [comments, setComments] = useState<Comment[]>([])
@@ -44,7 +244,7 @@ export default function Comments({ objectType, objectId, className = "" }: Comme
   const [loadingReplies, setLoadingReplies] = useState<number[]>([])
 
   // Fetch comments
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetcher<{
@@ -58,17 +258,11 @@ export default function Comments({ objectType, objectId, className = "" }: Comme
     } finally {
       setLoading(false)
     }
-  }
+  }, [objectType, objectId])
 
   // Submit new comment
-  const handleSubmitComment = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newComment.trim()) return
-
-    if (!isAuthenticated) {
-      toast.error('Please log in to post a comment')
-      return
-    }
+  const handleSubmitComment = async () => {
+    if (!newComment.trim() || !isAuthenticated) return
 
     try {
       setSubmitting(true)
@@ -88,24 +282,15 @@ export default function Comments({ objectType, objectId, className = "" }: Comme
       toast.success('Comment posted successfully!')
     } catch (error) {
       console.error('Failed to post comment:', error)
-      if (error instanceof Error && error.message.includes('Authentication credentials were not provided')) {
-        toast.error('Please log in to post a comment')
-      } else {
-        toast.error('Failed to post comment. Please try again.')
-      }
+      toast.error('Failed to post comment. Please try again.')
     } finally {
       setSubmitting(false)
     }
   }
 
-  // Submit reply
+  // Submit reply - handles both top-level and nested replies
   const handleSubmitReply = async (parentId: number) => {
-    if (!replyContent.trim()) return
-
-    if (!isAuthenticated) {
-      toast.error('Please log in to post a reply')
-      return
-    }
+    if (!replyContent.trim() || !isAuthenticated) return
 
     try {
       setSubmitting(true)
@@ -121,9 +306,22 @@ export default function Comments({ objectType, objectId, className = "" }: Comme
         body: JSON.stringify(replyData)
       })
 
-      // Update the parent comment's replies
+      // Find the top-level parent comment to update (flat structure)
+      const findTopLevelParent = (commentId: number): number => {
+        for (const comment of comments) {
+          if (comment.id === commentId) return commentId
+          if (comment.replies?.some(reply => reply.id === commentId)) {
+            return comment.id // Return the top-level comment, not the nested reply
+          }
+        }
+        return commentId
+      }
+
+      const topLevelParentId = findTopLevelParent(parentId)
+
+      // Update the top-level parent comment's replies (flat structure)
       setComments(prev => prev.map(comment => {
-        if (comment.id === parentId) {
+        if (comment.id === topLevelParentId) {
           return {
             ...comment,
             replies: [...(comment.replies || []), newReply],
@@ -138,11 +336,7 @@ export default function Comments({ objectType, objectId, className = "" }: Comme
       toast.success('Reply posted successfully!')
     } catch (error) {
       console.error('Failed to post reply:', error)
-      if (error instanceof Error && error.message.includes('Authentication credentials were not provided')) {
-        toast.error('Please log in to post a reply')
-      } else {
-        toast.error('Failed to post reply. Please try again.')
-      }
+      toast.error('Failed to post reply. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -176,29 +370,17 @@ export default function Comments({ objectType, objectId, className = "" }: Comme
   const toggleReplies = (commentId: number) => {
     const comment = comments.find(c => c.id === commentId)
     if (comment?.replies) {
-      // If replies are already loaded, just toggle visibility
       setComments(prev => prev.map(c => 
         c.id === commentId ? { ...c, showReplies: !c.showReplies } : c
       ))
     } else {
-      // Load replies if not loaded yet
       loadReplies(commentId)
     }
   }
 
-  // Get user initials for avatar fallback
-  const getUserInitials = (username: string) => {
-    return username
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
   useEffect(() => {
     fetchComments()
-  }, [objectType, objectId])
+  }, [objectType, objectId, fetchComments])
 
   if (loading) {
     return (
@@ -212,7 +394,7 @@ export default function Comments({ objectType, objectId, className = "" }: Comme
   }
 
   return (
-    <Card className={`${className}`}>
+    <Card className={className}>
       <CardContent className="p-6">
         <div className="flex items-center gap-2 mb-6">
           <MessageCircle className="h-5 w-5" />
@@ -223,29 +405,15 @@ export default function Comments({ objectType, objectId, className = "" }: Comme
 
         {/* New Comment Form */}
         {isAuthenticated ? (
-          <form onSubmit={handleSubmitComment} className="mb-8 space-y-4">
-            <Textarea
+          <div className="mb-8">
+            <CommentForm
               placeholder="Add your comment..."
               value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className="min-h-[100px] resize-none"
-              disabled={submitting}
+              onChange={setNewComment}
+              onSubmit={handleSubmitComment}
+              submitting={submitting}
             />
-            <div className="flex justify-end">
-              <Button 
-                type="submit" 
-                disabled={!newComment.trim() || submitting}
-                className="flex items-center gap-2"
-              >
-                {submitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-                Post Comment
-              </Button>
-            </div>
-          </form>
+          </div>
         ) : (
           <Alert className="mb-8">
             <LogIn className="h-4 w-4" />
@@ -268,137 +436,37 @@ export default function Comments({ objectType, objectId, className = "" }: Comme
           ) : (
             comments.map((comment) => (
               <div key={comment.id} className="space-y-4">
-                {/* Main Comment */}
-                <div className="flex gap-4">
-                  <Avatar className="h-10 w-10 flex-shrink-0">
-                    <AvatarImage src={comment.user.avatar} />
-                    <AvatarFallback>
-                      {getUserInitials(comment.user.username)}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-foreground">
-                        {comment.user.username}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(comment.created_at), "MMM d, yyyy 'at' h:mm a")}
-                      </span>
-                    </div>
-                    
-                    <p className="text-muted-foreground leading-relaxed">
-                      {comment.content}
-                    </p>
-                    
-                    <div className="flex items-center gap-4 pt-2">
-                      {isAuthenticated ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs h-8 px-2"
-                          onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                        >
-                          <Reply className="h-3 w-3 mr-1" />
-                          Reply
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs h-8 px-2"
-                          onClick={() => toast.error('Please log in to reply')}
-                        >
-                          <Reply className="h-3 w-3 mr-1" />
-                          Reply
-                        </Button>
-                      )}
-                      
-                      {comment.replies_count > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs h-8 px-2"
-                          onClick={() => toggleReplies(comment.id)}
-                          disabled={loadingReplies.includes(comment.id)}
-                        >
-                          {loadingReplies.includes(comment.id) ? (
-                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                          ) : (
-                            <MessageCircle className="h-3 w-3 mr-1" />
-                          )}
-                          {comment.showReplies ? 'Hide' : 'Show'} {comment.replies_count} {comment.replies_count === 1 ? 'reply' : 'replies'}
-                        </Button>
-                      )}
-                    </div>
-
-                    {/* Reply Form */}
-                    {replyingTo === comment.id && (
-                      <div className="mt-4 space-y-3">
-                        <Textarea
-                          placeholder={`Reply to ${comment.user.username}...`}
-                          value={replyContent}
-                          onChange={(e) => setReplyContent(e.target.value)}
-                          className="min-h-[80px] resize-none"
-                          disabled={submitting}
-                        />
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setReplyingTo(null)
-                              setReplyContent("")
-                            }}
-                            disabled={submitting}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleSubmitReply(comment.id)}
-                            disabled={!replyContent.trim() || submitting}
-                          >
-                            {submitting ? (
-                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                            ) : (
-                              <Send className="h-4 w-4 mr-1" />
-                            )}
-                            Reply
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <CommentItem
+                  comment={comment}
+                  onReply={handleSubmitReply}
+                  onToggleReplies={toggleReplies}
+                  replyingTo={replyingTo}
+                  onSetReplyingTo={setReplyingTo}
+                  replyContent={replyContent}
+                  onSetReplyContent={setReplyContent}
+                  submitting={submitting}
+                  loadingReplies={loadingReplies}
+                  isAuthenticated={isAuthenticated}
+                />
 
                 {/* Replies */}
                 {comment.showReplies && comment.replies && comment.replies.length > 0 && (
                   <div className="ml-14 space-y-4 border-l-2 border-muted pl-6">
                     {comment.replies.map((reply) => (
-                      <div key={reply.id} className="flex gap-4">
-                        <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarImage src={reply.user.avatar} />
-                          <AvatarFallback className="text-xs">
-                            {getUserInitials(reply.user.username)}
-                          </AvatarFallback>
-                        </Avatar>
-                        
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm">
-                              {reply.user.username}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {format(new Date(reply.created_at), "MMM d, yyyy 'at' h:mm a")}
-                            </span>
-                          </div>
-                          
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            {reply.content}
-                          </p>
-                        </div>
-                      </div>
+                      <CommentItem
+                        key={reply.id}
+                        comment={reply}
+                        isReply={true}
+                        onReply={handleSubmitReply}
+                        onToggleReplies={toggleReplies}
+                        replyingTo={replyingTo}
+                        onSetReplyingTo={setReplyingTo}
+                        replyContent={replyContent}
+                        onSetReplyContent={setReplyContent}
+                        submitting={submitting}
+                        loadingReplies={loadingReplies}
+                        isAuthenticated={isAuthenticated}
+                      />
                     ))}
                   </div>
                 )}

@@ -139,6 +139,23 @@ class CommentCreateListView(GenericAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = CreateCommentSerializer
 
+    def get_flattened_reply_count(self, comment_id):
+        """
+        Get total count of all descendant replies (flattened count)
+        """
+        def count_all_descendants(comment_id):
+            # Get direct children
+            direct_children = Comment.objects.filter(parent_id=comment_id)
+            total_count = direct_children.count()
+            
+            # Add counts from nested children
+            for child in direct_children:
+                total_count += count_all_descendants(child.id)
+            
+            return total_count
+        
+        return count_all_descendants(comment_id)
+
     def get(self, request):
         object_type = request.query_params.get('object_type')
         object_id = request.query_params.get('object_id')
@@ -156,12 +173,20 @@ class CommentCreateListView(GenericAPIView):
             content_type=content_type,
             object_id=object_id,
             parent__isnull=True
-        ).select_related('user').prefetch_related('replies').order_by('-created_at')  # Most recent first
+        ).select_related('user').order_by('-created_at')  # Most recent first
 
         paginated = CommentPagination()
         paginated_comments = paginated.paginate_queryset(comments, request)
+        
+        # Serialize with flattened reply counts
+        serialized_comments = []
+        for comment in paginated_comments:
+            serialized_comment = CommentSerializer(comment).data
+            # Override the replies_count with flattened count
+            serialized_comment['replies_count'] = self.get_flattened_reply_count(comment.id)
+            serialized_comments.append(serialized_comment)
 
-        return paginated.get_paginated_response(CommentSerializer(paginated_comments, many=True).data)
+        return paginated.get_paginated_response(serialized_comments)
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data, context={'request': request})
@@ -176,8 +201,33 @@ class CommentRepliesView(ListAPIView):
     serializer_class = CommentSerializer
     permission_classes = []
 
+    def get_all_descendant_ids(self, parent_id):
+        """
+        Recursively get all descendant comment IDs for a given parent comment.
+        This flattens the tree structure into a list.
+        """
+        descendants = []
+        
+        # Get direct children
+        direct_children = Comment.objects.filter(parent_id=parent_id).values_list('id', flat=True)
+        
+        for child_id in direct_children:
+            descendants.append(child_id)
+            # Recursively get children of children
+            descendants.extend(self.get_all_descendant_ids(child_id))
+        
+        return descendants
+
     def get_queryset(self):
         comment_id = self.kwargs['pk']
+        
+        # Get all descendant reply IDs (flattened)
+        all_reply_ids = self.get_all_descendant_ids(comment_id)
+        
+        if not all_reply_ids:
+            return Comment.objects.none()
+        
+        # Return all replies in chronological order (flat structure)
         return Comment.objects.filter(
-            parent_id=comment_id
-        ).select_related('user').order_by('created_at')  
+            id__in=all_reply_ids
+        ).select_related('user').order_by('created_at')
