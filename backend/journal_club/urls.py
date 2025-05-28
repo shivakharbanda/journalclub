@@ -7,6 +7,8 @@ from .views import (
     TopicDetailView,
     EpisodeTagManageView,
     TagDetailView,
+    CommentCreateListView,
+    CommentRepliesView
 )
 
 urlpatterns = [
@@ -23,4 +25,8 @@ urlpatterns = [
 
     # Ping
     path('api/ping/', ping, name='ping'),
+
+    # comments
+    path('api/comments/', CommentCreateListView.as_view()),
+    path('api/comments/<int:pk>/replies/', CommentRepliesView.as_view()), # GET
 ]

@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown"
 import EpisodeAudio from "@/components/episode-audio"
 import TagsList from "@/components/TagsList"
 import TopicsList from "@/components/TopicsList"
+import Comments from "@/components/CommentSection"
 
 type Tag = {
     id: number
@@ -87,6 +88,13 @@ export default function EpisodeDetail() {
                                 </div>
                             </div>
                         )}
+
+                        {/* Comments Section */}
+                        <Comments
+                            objectType="episode" 
+                            objectId={episode.id}
+                            className="mt-10"
+                        />
                     </div>
 
                     {/* Sidebar */}

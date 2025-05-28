@@ -1,6 +1,8 @@
 from rest_framework import serializers
-from .models import Episode, Tag, Topic
+from .models import Episode, Tag, Topic, Comment
+from django.contrib.contenttypes.models import ContentType
 
+from django.contrib.auth import get_user_model
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -33,3 +35,63 @@ class EpisodeSerializer(serializers.ModelSerializer):
             'topics', 'topic_ids'  # <-- these were probably missing
         ]
         read_only_fields = ['id', 'slug', 'created_at']
+
+
+User = get_user_model()
+
+class UserSerializer(serializers.ModelSerializer):
+    """Serializer for user data in comments"""
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email']
+        
+
+class CommentSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    replies_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Comment
+        fields = ['id', 'user', 'content', 'created_at', 'parent', 'replies_count']
+        
+    def get_replies_count(self, obj):
+        return obj.replies.count()
+
+
+class CreateCommentSerializer(serializers.ModelSerializer):
+    object_type = serializers.CharField()
+    object_id = serializers.IntegerField()
+    parent = serializers.IntegerField(required=False, allow_null=True)  # Changed from parent_id to parent
+
+    class Meta:
+        model = Comment
+        fields = ['content', 'object_type', 'object_id', 'parent']
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        model = validated_data.pop('object_type')
+        object_id = validated_data.pop('object_id')
+        parent_id = validated_data.pop('parent', None)
+
+        try:
+            content_type = ContentType.objects.get(model=model)
+            content_object = content_type.get_object_for_this_type(id=object_id)
+        except ContentType.DoesNotExist:
+            raise serializers.ValidationError("Invalid content type")
+        except content_type.model_class().DoesNotExist:
+            raise serializers.ValidationError("Target object does not exist")
+
+        parent_comment = None
+        if parent_id:
+            try:
+                parent_comment = Comment.objects.get(id=parent_id)
+            except Comment.DoesNotExist:
+                raise serializers.ValidationError("Parent comment does not exist")
+
+        comment = Comment.objects.create(
+            user=user,
+            content=validated_data['content'],
+            content_object=content_object,
+            parent=parent_comment
+        )
+        return comment
