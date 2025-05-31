@@ -121,3 +121,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Only clickable elements get pointer cursor */
+button,
+a,
+[role="button"],
+[onclick] {
+  cursor: pointer;
+}
+
+/* Text inputs get text cursor */
+input[type="text"],
+input[type="email"], 
+input[type="password"],
+textarea {
+  cursor: text;
+}
