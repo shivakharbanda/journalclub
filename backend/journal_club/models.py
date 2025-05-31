@@ -67,3 +67,23 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"Comment by {self.user} on {self.content_object}"
+    
+
+
+class ListeningHistory(models.Model):
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, db_index=True)
+    object_id = models.PositiveIntegerField(db_index=True)
+    listener = GenericForeignKey('content_type', 'object_id')
+
+    episode = models.ForeignKey('Episode', on_delete=models.CASCADE)
+    position_seconds = models.PositiveIntegerField(default=0)
+    completed = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('content_type', 'object_id', 'episode')
+        indexes = [
+            models.Index(fields=['content_type', 'object_id', 'episode']),
+        ]
+
+

@@ -1,4 +1,10 @@
-from .models import Episode, Tag, Topic, Comment
+from .models import (
+    Episode, Tag, 
+    Topic, Comment, 
+    ListeningHistory
+)
+from users.models import GuestUser
+
 from .serializers import EpisodeSerializer, TagSerializer, TopicSerializer, CommentSerializer, CreateCommentSerializer
 
 from rest_framework import generics, status, viewsets, mixins
@@ -15,6 +21,9 @@ from django.shortcuts import get_object_or_404
 from django.utils.text import slugify
 
 from rest_framework.pagination import PageNumberPagination
+
+from users.models import GuestUser
+from django.utils import timezone
 
 import logging
 logger = logging.getLogger('journal_club')
@@ -231,3 +240,76 @@ class CommentRepliesView(ListAPIView):
         return Comment.objects.filter(
             id__in=all_reply_ids
         ).select_related('user').order_by('created_at')
+
+
+
+class SaveListeningProgressView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        slug = request.query_params.get('episode_slug')
+        if not slug:
+            return Response({"error": "episode_slug is required"}, status=400)
+
+        episode = get_object_or_404(Episode, slug=slug)
+
+        # Identify actor
+        if request.user.is_authenticated:
+            actor = request.user
+        else:
+            actor = getattr(request, 'guest_user', None)
+            if not actor:
+                return Response({"error": "guest_id not set"}, status=400)
+
+        content_type = ContentType.objects.get_for_model(actor.__class__)
+
+        try:
+            history = ListeningHistory.objects.get(
+                content_type=content_type,
+                object_id=actor.id,
+                episode=episode
+            )
+            return Response({
+                "position_seconds": history.position_seconds,
+                "completed": history.completed
+            })
+        except ListeningHistory.DoesNotExist:
+            return Response({
+                "position_seconds": 0,
+                "completed": False
+            })
+
+
+    def post(self, request):
+        slug = request.data.get('episode_slug')
+        position = request.data.get('position_seconds', 0)
+        completed = request.data.get('completed', False)
+
+        if not slug:
+            return Response({"error": "episode_slug is required"}, status=400)
+
+        episode = get_object_or_404(Episode, slug=slug)
+
+        # Determine who the actor is
+        if request.user.is_authenticated:
+            actor = request.user
+        else:
+            actor = getattr(request, 'guest_user', None)
+            if not actor:
+                return Response({"error": "guest_id not set"}, status=400)
+
+        content_type = ContentType.objects.get_for_model(actor.__class__)
+
+        # Save or update progress
+        history, _ = ListeningHistory.objects.update_or_create(
+            content_type=content_type,
+            object_id=actor.id,
+            episode=episode,
+            defaults={
+                'position_seconds': int(position),
+                'completed': completed,
+                'updated_at': timezone.now()
+            }
+        )
+
+        return Response({"message": "Progress saved"})

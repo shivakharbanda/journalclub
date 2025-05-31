@@ -8,7 +8,8 @@ from .views import (
     EpisodeTagManageView,
     TagDetailView,
     CommentCreateListView,
-    CommentRepliesView
+    CommentRepliesView,
+    SaveListeningProgressView
 )
 
 urlpatterns = [
@@ -29,4 +30,7 @@ urlpatterns = [
     # comments
     path('api/comments/', CommentCreateListView.as_view()),
     path('api/comments/<int:pk>/replies/', CommentRepliesView.as_view()), # GET
+
+    # progress and history
+    path('api/listen-progress/', SaveListeningProgressView.as_view(), name='save-listening-progress'),
 ]

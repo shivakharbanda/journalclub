@@ -73,7 +73,7 @@ export default function EpisodeDetail() {
                                 
                                 <div className="p-6 sm:p-8 space-y-6">
                                     {/* Audio */}
-                                    <EpisodeAudio url={episode.audio_file} />
+                                    <EpisodeAudio url={episode.audio_file} episodeSlug={episode.slug} />
 
                                     <TopicsList topics={episode.topics} />
                                     <TagsList tags={episode.tags} />
