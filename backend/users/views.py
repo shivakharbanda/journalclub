@@ -16,6 +16,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from users.utils import transfer_guest_data_to_user
+
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -28,6 +30,11 @@ def get_tokens_for_user(user):
 class UserRegistrationView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
 
+    def perform_create(self, serializer):
+        user = serializer.save()
+        guest_id = self.request.COOKIES.get('guest_id')
+        if guest_id:
+            transfer_guest_data_to_user(user, guest_id)
 
 class CookieTokenObtainPairView(APIView):
     def post(self, request, *args, **kwargs):
@@ -39,6 +46,10 @@ class CookieTokenObtainPairView(APIView):
             return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
         tokens = get_tokens_for_user(user)
+
+        guest_id = request.COOKIES.get('guest_id')
+        if guest_id:
+            transfer_guest_data_to_user(user, guest_id)
 
         response = Response({
             "detail": "Login successful",
