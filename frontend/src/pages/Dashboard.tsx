@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { PageHeader, PageHeaderHeading } from "@/components/page-header"
 import { fetcher } from "@/lib/api"
 import EpisodeCard from "@/components/EpisodeCard"
+import ContinueListeningCarousel from "@/components/continue-listening"
 
 type Tag = {
     id: number
@@ -39,6 +40,9 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-6 px-4 md:px-12 py-6">
+
+            <ContinueListeningCarousel />
+
             <PageHeader>
                 <PageHeaderHeading>Latest Episodes</PageHeaderHeading>
             </PageHeader>

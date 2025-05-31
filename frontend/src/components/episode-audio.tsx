@@ -43,12 +43,16 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
     }, [url])
 
     const saveProgress = async (position: number, completed = false) => {
+        const audio = audioRef.current
+        if (!audio || isNaN(audio.duration)) return
+
         try {
             await fetcher("/listen-progress/", {
                 method: "POST",
                 body: JSON.stringify({
                     episode_slug: episodeSlug,
                     position_seconds: Math.floor(position),
+                    duration_seconds: Math.floor(audio.duration), // <-- send total duration
                     completed,
                 }),
             })
