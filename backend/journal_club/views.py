@@ -5,7 +5,11 @@ from .models import (
 )
 from users.models import GuestUser
 
-from .serializers import EpisodeSerializer, TagSerializer, TopicSerializer, CommentSerializer, CreateCommentSerializer
+from .serializers import (
+    EpisodeSerializer, TagSerializer, TopicSerializer, 
+    CommentSerializer, CreateCommentSerializer,
+    ContinueListeningEpisodeSerializer
+)
 
 from rest_framework import generics, status, viewsets, mixins
 from rest_framework.generics import ListAPIView, GenericAPIView
@@ -283,6 +287,7 @@ class SaveListeningProgressView(APIView):
     def post(self, request):
         slug = request.data.get('episode_slug')
         position = request.data.get('position_seconds', 0)
+        duration = request.data.get('duration_seconds', 0)  # <-- NEW
         completed = request.data.get('completed', False)
 
         if not slug:
@@ -290,7 +295,6 @@ class SaveListeningProgressView(APIView):
 
         episode = get_object_or_404(Episode, slug=slug)
 
-        # Determine who the actor is
         if request.user.is_authenticated:
             actor = request.user
         else:
@@ -300,16 +304,50 @@ class SaveListeningProgressView(APIView):
 
         content_type = ContentType.objects.get_for_model(actor.__class__)
 
-        # Save or update progress
-        history, _ = ListeningHistory.objects.update_or_create(
+        ListeningHistory.objects.update_or_create(
             content_type=content_type,
             object_id=actor.id,
             episode=episode,
             defaults={
                 'position_seconds': int(position),
+                'duration_seconds': int(duration),  # <-- STORE IT
                 'completed': completed,
                 'updated_at': timezone.now()
             }
         )
 
         return Response({"message": "Progress saved"})
+
+class ContinueListeningListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        if request.user.is_authenticated:
+            actor = request.user
+        else:
+            actor = getattr(request, 'guest_user', None)
+            if not actor:
+                return Response({"error": "guest_id not set"}, status=400)
+
+        content_type = ContentType.objects.get_for_model(actor.__class__)
+
+        histories = (
+            ListeningHistory.objects
+            .filter(content_type=content_type, object_id=actor.id, completed=False)
+            .select_related('episode')
+            .order_by('-updated_at')[:10]
+        )
+
+        # Annotate episodes with progress
+        episodes = []
+        for h in histories:
+            ep = h.episode
+            ep.position_seconds = h.position_seconds
+            ep.duration_seconds = getattr(h, 'duration_seconds', None) or 0  # attach duration
+            ep.completed = h.completed
+            episodes.append(ep)
+
+        serializer = ContinueListeningEpisodeSerializer(
+            episodes, many=True, context={'request': request}
+        )
+        return Response(serializer.data)

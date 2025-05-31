@@ -9,7 +9,8 @@ from .views import (
     TagDetailView,
     CommentCreateListView,
     CommentRepliesView,
-    SaveListeningProgressView
+    SaveListeningProgressView,
+    ContinueListeningListView,
 )
 
 urlpatterns = [
@@ -33,4 +34,6 @@ urlpatterns = [
 
     # progress and history
     path('api/listen-progress/', SaveListeningProgressView.as_view(), name='save-listening-progress'),
+    path('api/episodes/continue/', ContinueListeningListView.as_view(), name='continue-listening-episodes'),
+
 ]

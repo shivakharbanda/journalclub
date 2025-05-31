@@ -76,6 +76,7 @@ class ListeningHistory(models.Model):
     listener = GenericForeignKey('content_type', 'object_id')
 
     episode = models.ForeignKey('Episode', on_delete=models.CASCADE)
+    duration_seconds = models.PositiveIntegerField(default=0)
     position_seconds = models.PositiveIntegerField(default=0)
     completed = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
