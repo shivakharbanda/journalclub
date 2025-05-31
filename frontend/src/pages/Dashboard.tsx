@@ -3,6 +3,8 @@ import { PageHeader, PageHeaderHeading } from "@/components/page-header"
 import { fetcher } from "@/lib/api"
 import EpisodeCard from "@/components/EpisodeCard"
 import ContinueListeningCarousel from "@/components/continue-listening"
+import BookmarkedEpisodesCarousel from "@/components/bookmarked-section"
+import LatestEpisodesSection from "@/components/LatestEpisodesSection"
 
 type Tag = {
     id: number
@@ -43,15 +45,9 @@ export default function Dashboard() {
 
             <ContinueListeningCarousel />
 
-            <PageHeader>
-                <PageHeaderHeading>Latest Episodes</PageHeaderHeading>
-            </PageHeader>
+            <LatestEpisodesSection />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {episodes.map(ep => (
-                    <EpisodeCard key={ep.id} episode={ep} />
-                ))}
-            </div>
+            <BookmarkedEpisodesCarousel />
         </div>
     )
 }

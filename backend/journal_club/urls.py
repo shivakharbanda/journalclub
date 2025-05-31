@@ -13,6 +13,7 @@ from .views import (
     ContinueListeningListView,
     EpisodeLikeDislikeView,
     SaveContentView,
+    SavedContentListView,
 )
 
 urlpatterns = [
@@ -37,5 +38,7 @@ urlpatterns = [
     # progress and history
     path('api/listen-progress/', SaveListeningProgressView.as_view(), name='save-listening-progress'),
     path('api/episodes/continue/', ContinueListeningListView.as_view(), name='continue-listening-episodes'),
+
+    path('api/saved-episodes/', SavedContentListView.as_view(), name='saved-episodes-list-view'), 
 
 ]

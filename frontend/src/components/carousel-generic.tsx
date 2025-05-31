@@ -7,6 +7,7 @@ type Props = {
     children: ReactNode[]
     itemsToShow?: number
     title?: string
+    subtitle?: string
     className?: string
 }
 
@@ -14,6 +15,7 @@ export default function Carousel({
     children, 
     itemsToShow = 4, 
     title,
+    subtitle,
     className = ""
 }: Props) {
     const [currentIndex, setCurrentIndex] = useState(0)
@@ -31,8 +33,15 @@ export default function Carousel({
 
     return (
         <div className={cn("space-y-4", className)}>
-            {title && (
-                <h2 className="text-2xl font-bold text-foreground">{title}</h2>
+            {(title || subtitle) && (
+                <div className="space-y-1">
+                    {title && (
+                        <h2 className="text-2xl font-bold text-foreground">{title}</h2>
+                    )}
+                    {subtitle && (
+                        <p className="text-sm text-muted-foreground">{subtitle}</p>
+                    )}
+                </div>
             )}
             
             <div className="relative group">
@@ -76,13 +85,8 @@ export default function Carousel({
                         {children.map((child, index) => (
                             <div 
                                 key={index}
-                                className={cn(
-                                    "flex-none",
-                                    children.length >= itemsToShow 
-                                        ? "w-full sm:w-1/2 lg:w-1/3 xl:w-1/4"
-                                        : "w-full sm:w-1/2 lg:w-1/3 xl:w-1/4"
-                                )}
-                                style={{ width: children.length >= itemsToShow ? `${100 / itemsToShow}%` : 'auto' }}
+                                className="flex-none"
+                                style={{ width: `${100 / itemsToShow}%` }}
                             >
                                 {child}
                             </div>

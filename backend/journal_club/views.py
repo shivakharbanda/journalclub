@@ -496,3 +496,37 @@ class SaveContentView(APIView):
         ).delete()
 
         return Response({"message": "Removed from list" if deleted else "Not found"})
+
+
+class SavedContentListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get_actor(self, request):
+        if request.user.is_authenticated:
+            return request.user
+        return getattr(request, 'guest_user', None)
+
+    def get(self, request):
+        actor = self.get_actor(request)
+        if not actor:
+            return Response({"error": "guest_id not set"}, status=400)
+
+        actor_ct = ContentType.objects.get_for_model(actor.__class__)
+        episode_ct = ContentType.objects.get_for_model(Episode)
+
+        saved_items = (
+            SavedEpisode.objects
+            .filter(
+                content_type=actor_ct,
+                object_id=actor.id,
+                saved_content_type=episode_ct
+            )
+            .select_related('saved_object_id__episode')  # just in case
+        )
+
+        episode_ids = saved_items.values_list('saved_object_id', flat=True)
+
+        episodes = Episode.objects.filter(id__in=episode_ids).order_by('-created_at')
+
+        serializer = ContinueListeningEpisodeSerializer(episodes, many=True, context={'request': request})
+        return Response(serializer.data)
