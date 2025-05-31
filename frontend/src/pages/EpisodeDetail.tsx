@@ -38,6 +38,7 @@ type Episode = {
     likes_count: number
     dislikes_count: number
     user_action?: 'like' | 'dislike' | null
+    is_saved: boolean
 }
 
 export default function EpisodeDetail() {
@@ -60,6 +61,7 @@ export default function EpisodeDetail() {
                 setDislikeCount(data.dislikes_count || 0)
                 setLiked(data.user_action === 'like')
                 setDisliked(data.user_action === 'dislike')
+                setSaved(data.is_saved  || false)
             })
             .catch(console.error)
     }, [slug])
@@ -123,9 +125,39 @@ export default function EpisodeDetail() {
     const handleLike = () => handleLikeDislike('like')
     const handleDislike = () => handleLikeDislike('dislike')
 
-    const handleSave = () => {
-        setSaved(!saved)
-        // Add your save logic here
+    const handleSave = async () => {
+        if (!episode || isLoading) return
+        
+        setIsLoading(true)
+        
+        try {
+            if (saved) {
+                // Remove from saved
+                await fetcher(`/episode/${episode.slug}/save/`, {
+                    method: 'DELETE',
+                    body: JSON.stringify({
+                        content_type: 'episode',
+                        object_id: episode.id
+                    })
+                })
+                setSaved(false)
+            } else {
+                // Add to saved
+                await fetcher(`/episode/${episode.slug}/save/`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        content_type: 'episode',
+                        object_id: episode.id
+                    })
+                })
+                setSaved(true)
+            }
+        } catch (error) {
+            console.error(`Error ${saved ? 'removing from' : 'adding to'} saved:`, error)
+            // You might want to show a toast notification here
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     const handleShare = () => {

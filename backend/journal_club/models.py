@@ -104,3 +104,21 @@ class LikeDislike(models.Model):
 
     class Meta:
         unique_together = ('content_type', 'object_id', 'episode')
+
+class SavedEpisode(models.Model):
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    user = GenericForeignKey('content_type', 'object_id')
+
+    # This now points to any "savable" object (Episode, Series, etc.)
+    saved_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name='+')
+    saved_object_id = models.PositiveIntegerField()
+    saved_object = GenericForeignKey('saved_content_type', 'saved_object_id')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (
+            'content_type', 'object_id',
+            'saved_content_type', 'saved_object_id'
+        )

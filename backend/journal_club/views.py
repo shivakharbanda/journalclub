@@ -3,6 +3,7 @@ from .models import (
     Topic, Comment, 
     ListeningHistory,
     Episode, LikeDislike,
+    SavedEpisode,
 )
 
 from .serializers import (
@@ -450,3 +451,48 @@ class EpisodeLikeDislikeView(APIView):
                 episode.save(update_fields=['likes_count', 'dislikes_count'])
 
         return Response({"message": f"{action.capitalize()} removed."}, status=200)
+
+
+class SaveContentView(APIView):
+    permission_classes = [AllowAny]
+
+    def get_actor(self, request):
+        if request.user.is_authenticated:
+            return request.user
+        return getattr(request, 'guest_user', None)
+
+    def post(self, request, slug):
+        episode = get_object_or_404(Episode, slug=slug)
+        actor = self.get_actor(request)
+        if not actor:
+            return Response({"error": "guest_id not set"}, status=400)
+
+        actor_ct = ContentType.objects.get_for_model(actor.__class__)
+        saved_ct = ContentType.objects.get_for_model(Episode)
+
+        _, created = SavedEpisode.objects.get_or_create(
+            content_type=actor_ct,
+            object_id=actor.id,
+            saved_content_type=saved_ct,
+            saved_object_id=episode.id
+        )
+
+        return Response({"message": "Saved" if created else "Already saved"})
+
+    def delete(self, request, slug):
+        episode = get_object_or_404(Episode, slug=slug)
+        actor = self.get_actor(request)
+        if not actor:
+            return Response({"error": "guest_id not set"}, status=400)
+
+        actor_ct = ContentType.objects.get_for_model(actor.__class__)
+        saved_ct = ContentType.objects.get_for_model(Episode)
+
+        deleted, _ = SavedEpisode.objects.filter(
+            content_type=actor_ct,
+            object_id=actor.id,
+            saved_content_type=saved_ct,
+            saved_object_id=episode.id
+        ).delete()
+
+        return Response({"message": "Removed from list" if deleted else "Not found"})

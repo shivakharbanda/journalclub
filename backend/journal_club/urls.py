@@ -12,6 +12,7 @@ from .views import (
     SaveListeningProgressView,
     ContinueListeningListView,
     EpisodeLikeDislikeView,
+    SaveContentView,
 )
 
 urlpatterns = [
@@ -20,7 +21,7 @@ urlpatterns = [
     path('api/episode/<slug:slug>/', EpisodeDetailView.as_view(), name='episode-detail'),
     path('api/episode/<slug:slug>/tags/', EpisodeTagManageView.as_view(), name='episode-tag-manage'),
     path('api/episode/<slug:slug>/like-dislike/', EpisodeLikeDislikeView.as_view(), name='episode-like-dislike'),
-
+    path('api/episode/<slug:slug>/save/', SaveContentView.as_view(), name='episode-save'),
     # Topics
     path('api/topics/', TopicListCreateView.as_view(), name='topic-list-create'),
     path('api/topics/<slug:slug>/', TopicDetailView.as_view(), name='topic-detail'),

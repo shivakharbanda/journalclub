@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Episode, Tag, Topic, Comment, LikeDislike
+from .models import Episode, Tag, Topic, Comment, LikeDislike, SavedEpisode
 from django.contrib.contenttypes.models import ContentType
 
 from django.contrib.auth import get_user_model
@@ -27,8 +27,7 @@ class EpisodeSerializer(serializers.ModelSerializer):
     )
 
     user_action = serializers.SerializerMethodField()
-
-
+    is_saved = serializers.SerializerMethodField()  
     class Meta:
         model = Episode
         fields = [
@@ -36,6 +35,7 @@ class EpisodeSerializer(serializers.ModelSerializer):
             'sources', 'audio_file', 'image', 'created_at',
             'tags', 'tag_ids', 'topics', 'topic_ids', 
             'likes_count', 'dislikes_count', 'user_action',
+            'is_saved',
         ]
         read_only_fields = ['id', 'slug', 'created_at']
 
@@ -60,6 +60,24 @@ class EpisodeSerializer(serializers.ModelSerializer):
             return interaction.action
         except LikeDislike.DoesNotExist:
             return None
+
+    def get_is_saved(self, episode):
+        request = self.context.get("request")
+        if not request:
+            return False
+
+        user = request.user if request.user.is_authenticated else getattr(request, 'guest_user', None)
+        if not user:
+            return False
+
+        content_type = ContentType.objects.get_for_model(user.__class__)
+        return SavedEpisode.objects.filter(
+            content_type=content_type,
+            object_id=user.id,
+            saved_content_type=ContentType.objects.get_for_model(Episode),
+            saved_object_id=episode.id
+        ).exists()
+
 
 
 
