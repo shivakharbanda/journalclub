@@ -41,6 +41,9 @@ class Episode(models.Model):
     topics  = models.ManyToManyField(Topic, related_name='episodes', blank=True)
     tags = models.ManyToManyField(Tag, related_name='episodes', blank=True)
 
+    likes_count = models.PositiveIntegerField(default=0)
+    dislikes_count = models.PositiveIntegerField(default=0)
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.title)
@@ -88,3 +91,16 @@ class ListeningHistory(models.Model):
         ]
 
 
+class LikeDislike(models.Model):
+    ACTIONS = [('like', 'Like'), ('dislike', 'Dislike')]
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    actor = GenericForeignKey('content_type', 'object_id')
+
+    episode = models.ForeignKey('Episode', on_delete=models.CASCADE)
+    action = models.CharField(max_length=10, choices=ACTIONS)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('content_type', 'object_id', 'episode')

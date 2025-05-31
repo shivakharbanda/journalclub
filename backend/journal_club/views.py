@@ -1,9 +1,9 @@
 from .models import (
     Episode, Tag, 
     Topic, Comment, 
-    ListeningHistory
+    ListeningHistory,
+    Episode, LikeDislike,
 )
-from users.models import GuestUser
 
 from .serializers import (
     EpisodeSerializer, TagSerializer, TopicSerializer, 
@@ -11,22 +11,21 @@ from .serializers import (
     ContinueListeningEpisodeSerializer
 )
 
-from rest_framework import generics, status, viewsets, mixins
+from rest_framework import generics
 from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.pagination import PageNumberPagination
 
 from django.contrib.contenttypes.models import ContentType
 
 from django.shortcuts import get_object_or_404
 from django.utils.text import slugify
+from django.db import models, transaction
 
-from rest_framework.pagination import PageNumberPagination
-
-from users.models import GuestUser
 from django.utils import timezone
 
 import logging
@@ -361,3 +360,93 @@ class ContinueListeningListView(APIView):
             episodes, many=True, context={'request': request}
         )
         return Response(serializer.data)
+    
+
+class EpisodeLikeDislikeView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, slug):
+        action = request.data.get("action")  # 'like' or 'dislike'
+
+        if not slug or action not in ['like', 'dislike']:
+            return Response({"error": "Invalid input"}, status=400)
+
+        episode = get_object_or_404(Episode, slug=slug)
+
+        # Identify actor
+        if request.user.is_authenticated:
+            actor = request.user
+        else:
+            actor = getattr(request, 'guest_user', None)
+            if not actor:
+                return Response({"error": "guest_id not set"}, status=400)
+
+        content_type = ContentType.objects.get_for_model(actor.__class__)
+
+        with transaction.atomic():
+            obj, created = LikeDislike.objects.get_or_create(
+                content_type=content_type,
+                object_id=actor.id,
+                episode=episode,
+                defaults={'action': action}
+            )
+
+            if created:
+                # first time action
+                if action == 'like':
+                    episode.likes_count = models.F('likes_count') + 1
+                else:
+                    episode.dislikes_count = models.F('dislikes_count') + 1
+                episode.save(update_fields=['likes_count', 'dislikes_count'])
+            else:
+                # toggle or same action?
+                if obj.action == action:
+                    return Response({"message": f"Already {action}d"}, status=200)
+                else:
+                    # change action
+                    if action == 'like':
+                        episode.likes_count = models.F('likes_count') + 1
+                        episode.dislikes_count = models.F('dislikes_count') - 1
+                    else:
+                        episode.likes_count = models.F('likes_count') - 1
+                        episode.dislikes_count = models.F('dislikes_count') + 1
+
+                    obj.action = action
+                    obj.save(update_fields=['action'])
+                    episode.save(update_fields=['likes_count', 'dislikes_count'])
+
+        return Response({"message": f"{action.capitalize()} registered."}, status=200)
+
+    def delete(self, request, slug):
+        action = request.data.get("action")  # 'like' or 'dislike'
+
+        if not slug or action not in ['like', 'dislike']:
+            return Response({"error": "Invalid input"}, status=400)
+
+        episode = get_object_or_404(Episode, slug=slug)
+
+        if request.user.is_authenticated:
+            actor = request.user
+        else:
+            actor = getattr(request, 'guest_user', None)
+            if not actor:
+                return Response({"error": "guest_id not set"}, status=400)
+
+        content_type = ContentType.objects.get_for_model(actor.__class__)
+
+        with transaction.atomic():
+            deleted = LikeDislike.objects.filter(
+                content_type=content_type,
+                object_id=actor.id,
+                episode=episode,
+                action=action
+            ).delete()
+
+            if deleted[0] > 0:
+                if action == 'like':
+                    episode.likes_count = models.F('likes_count') - 1
+                else:
+                    episode.dislikes_count = models.F('dislikes_count') - 1
+                episode.save(update_fields=['likes_count', 'dislikes_count'])
+
+        return Response({"message": f"{action.capitalize()} removed."}, status=200)

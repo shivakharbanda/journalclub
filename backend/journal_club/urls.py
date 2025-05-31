@@ -11,6 +11,7 @@ from .views import (
     CommentRepliesView,
     SaveListeningProgressView,
     ContinueListeningListView,
+    EpisodeLikeDislikeView,
 )
 
 urlpatterns = [
@@ -18,6 +19,7 @@ urlpatterns = [
     path('api/episodes/', EpisodeListCreateView.as_view(), name='episode-list-create'),
     path('api/episode/<slug:slug>/', EpisodeDetailView.as_view(), name='episode-detail'),
     path('api/episode/<slug:slug>/tags/', EpisodeTagManageView.as_view(), name='episode-tag-manage'),
+    path('api/episode/<slug:slug>/like-dislike/', EpisodeLikeDislikeView.as_view(), name='episode-like-dislike'),
 
     # Topics
     path('api/topics/', TopicListCreateView.as_view(), name='topic-list-create'),
@@ -31,7 +33,6 @@ urlpatterns = [
     # comments
     path('api/comments/', CommentCreateListView.as_view()),
     path('api/comments/<int:pk>/replies/', CommentRepliesView.as_view()), # GET
-
     # progress and history
     path('api/listen-progress/', SaveListeningProgressView.as_view(), name='save-listening-progress'),
     path('api/episodes/continue/', ContinueListeningListView.as_view(), name='continue-listening-episodes'),

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Episode, Tag, Topic, Comment
+from .models import Episode, Tag, Topic, Comment, LikeDislike
 from django.contrib.contenttypes.models import ContentType
 
 from django.contrib.auth import get_user_model
@@ -26,15 +26,41 @@ class EpisodeSerializer(serializers.ModelSerializer):
         queryset=Topic.objects.all(), many=True, write_only=True, source='topics'
     )
 
+    user_action = serializers.SerializerMethodField()
+
+
     class Meta:
         model = Episode
         fields = [
             'id', 'title', 'slug', 'summary_text', 'description',
             'sources', 'audio_file', 'image', 'created_at',
-            'tags', 'tag_ids',
-            'topics', 'topic_ids'  # <-- these were probably missing
+            'tags', 'tag_ids', 'topics', 'topic_ids', 
+            'likes_count', 'dislikes_count', 'user_action',
         ]
         read_only_fields = ['id', 'slug', 'created_at']
+
+    def get_user_action(self, episode):
+        request = self.context.get("request")
+        if not request:
+            return None
+
+        user = request.user if request.user.is_authenticated else getattr(request, 'guest_user', None)
+        if not user:
+            return None
+
+        from django.contrib.contenttypes.models import ContentType
+        content_type = ContentType.objects.get_for_model(user.__class__)
+
+        try:
+            interaction = LikeDislike.objects.get(
+                content_type=content_type,
+                object_id=user.id,
+                episode=episode
+            )
+            return interaction.action
+        except LikeDislike.DoesNotExist:
+            return None
+
 
 
 User = get_user_model()
