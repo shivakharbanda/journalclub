@@ -345,6 +345,16 @@ class ContinueListeningListView(APIView):
             ep.position_seconds = h.position_seconds
             ep.duration_seconds = getattr(h, 'duration_seconds', None) or 0  # attach duration
             ep.completed = h.completed
+
+            if ep.duration_seconds > 0:
+                progress = int((ep.position_seconds / ep.duration_seconds) * 100)
+            else:
+                progress = 0
+
+            # exclude fully played episodes
+            if h.completed or progress >= 100:
+                continue
+
             episodes.append(ep)
 
         serializer = ContinueListeningEpisodeSerializer(
