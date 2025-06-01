@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "journal_club",
     'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
+    'journalnotes'
 ]
 
 MIDDLEWARE = [

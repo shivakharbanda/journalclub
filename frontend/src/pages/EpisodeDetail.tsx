@@ -8,6 +8,7 @@ import TagsList from "@/components/TagsList"
 import TopicsList from "@/components/TopicsList"
 import Comments from "@/components/CommentSection"
 import { Bookmark, Share2, ThumbsDown, ThumbsUp } from "lucide-react"
+import NotesApp from "@/components/note-taking-app"
 
 type Tag = {
     id: number
@@ -299,6 +300,8 @@ export default function EpisodeDetail() {
                                 </ul>
                             </section>
                         )}
+
+                        {episode && <NotesApp episodeSlug={episode.slug} />}
                     </aside>
                 </div>
             </div>

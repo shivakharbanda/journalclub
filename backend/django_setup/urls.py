@@ -24,6 +24,7 @@ urlpatterns = [
     path('', include('journal_club.urls')),
     path("admin/", admin.site.urls),
     path("api/user/", include("users.urls")),
+    path("api/notes/", include("journalnotes.urls")),
     
 ]
 

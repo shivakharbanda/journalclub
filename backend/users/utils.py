@@ -2,6 +2,8 @@ from django.contrib.contenttypes.models import ContentType
 from users.models import GuestUser
 from journal_club.models import ListeningHistory, LikeDislike, SavedEpisode
 
+from journalnotes.models import Note
+
 def transfer_guest_data_to_user(user, guest_id):
     try:
         guest = GuestUser.objects.get(device_id=guest_id)
@@ -92,6 +94,25 @@ def transfer_guest_data_to_user(user, guest_id):
             saved_object_id=save.saved_object_id
         )
 
+    # Transfer Notes
+    guest_notes = Note.objects.filter(
+        content_type=guest_ct,
+        object_id=guest.id
+    )
+
+    for note in guest_notes:
+        # Check if the user already has a note for the same episode + title
+        existing = Note.objects.filter(
+            content_type=user_ct,
+            object_id=user.id,
+            episode=note.episode,
+            title=note.title
+        ).first()
+
+        if not existing:
+            note.content_type = user_ct
+            note.object_id = user.id
+            note.save()
 
     # TODO: Replace manual count adjustments with a background job or cron
     # that recalculates like/dislike counts from LikeDislike model for consistency
