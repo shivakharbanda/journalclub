@@ -3,6 +3,10 @@ from .models import Episode, Tag, Topic, Comment, LikeDislike, SavedEpisode
 from django.contrib.contenttypes.models import ContentType
 
 from django.contrib.auth import get_user_model
+from django.conf import settings
+
+
+from .utils import cdn_or_absolute 
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,6 +22,9 @@ class TopicSerializer(serializers.ModelSerializer):
 class EpisodeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     topics = TopicSerializer(many=True, read_only=True)
+
+    audio_file = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
 
     tag_ids = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True, write_only=True, source='tags'
@@ -38,6 +45,14 @@ class EpisodeSerializer(serializers.ModelSerializer):
             'is_saved',
         ]
         read_only_fields = ['id', 'slug', 'created_at']
+
+    def get_audio_file(self, obj):
+        request = self.context.get('request')
+        return cdn_or_absolute(request, obj.audio_file, settings.AUDIO_CDN_DOMAIN)
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        return cdn_or_absolute(request, obj.image, settings.AUDIO_CDN_DOMAIN)
 
     def get_user_action(self, episode):
         request = self.context.get("request")
@@ -169,11 +184,11 @@ class ContinueListeningEpisodeSerializer(serializers.ModelSerializer):
 
     def get_audio_file(self, obj):
         request = self.context.get('request')
-        return request.build_absolute_uri(obj.audio_file.url) if obj.audio_file else None
+        return cdn_or_absolute(request, obj.audio_file, settings.AUDIO_CDN_DOMAIN)
 
     def get_image(self, obj):
         request = self.context.get('request')
-        return request.build_absolute_uri(obj.image.url) if obj.image else None
+        return cdn_or_absolute(request, obj.image, settings.AUDIO_CDN_DOMAIN)
     
     def get_duration_seconds(self, obj):
         return getattr(obj, 'duration_seconds', 0)

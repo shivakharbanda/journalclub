@@ -7,7 +7,6 @@ type Props = {
 }
 
 export default function EpisodeAudio({ url, episodeSlug }: Props) {
-    const [audioSrc, setAudioSrc] = useState<string | null>(null)
     const audioRef = useRef<HTMLAudioElement | null>(null)
     const lastPercentSent = useRef<number>(0)
     const intervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -16,31 +15,21 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
     const [startFrom, setStartFrom] = useState<number>(0)
 
     useEffect(() => {
-        let localUrl: string
-
-        async function fetchAudio() {
+        async function fetchProgress() {
             try {
-                // 1. Fetch saved progress
                 const progress = await fetcher<{ position_seconds: number }>("/listen-progress/?episode_slug=" + episodeSlug)
                 setStartFrom(progress.position_seconds || 0)
-
-                // 2. Fetch audio blob
-                const res = await fetch(url)
-                const blob = await res.blob()
-                localUrl = URL.createObjectURL(blob)
-                setAudioSrc(localUrl)
             } catch (err) {
-                console.error("Failed to load audio or progress:", err)
+                console.error("Failed to load progress:", err)
             }
         }
 
-        fetchAudio()
+        fetchProgress()
 
         return () => {
-            if (localUrl) URL.revokeObjectURL(localUrl)
             if (intervalRef.current) clearInterval(intervalRef.current)
         }
-    }, [url])
+    }, [episodeSlug])
 
     const saveProgress = async (position: number, completed = false) => {
         const audio = audioRef.current
@@ -52,7 +41,7 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
                 body: JSON.stringify({
                     episode_slug: episodeSlug,
                     position_seconds: Math.floor(position),
-                    duration_seconds: Math.floor(audio.duration), // <-- send total duration
+                    duration_seconds: Math.floor(audio.duration),
                     completed,
                 }),
             })
@@ -65,7 +54,6 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
         const audio = audioRef.current
         if (!audio || initLogged.current) return
 
-        // jump to previous time if needed
         if (startFrom > 0) {
             audio.currentTime = startFrom
         }
@@ -112,8 +100,6 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
         }
     }
 
-    if (!audioSrc) return <p className="text-sm">Loading audio...</p>
-
     return (
         <audio
             ref={audioRef}
@@ -124,7 +110,7 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
             onPause={handlePause}
             onEnded={handleEnded}
         >
-            <source src={audioSrc} type="audio/wav" />
+            <source src={url} type="audio/wav" />
             Your browser does not support the audio element.
         </audio>
     )

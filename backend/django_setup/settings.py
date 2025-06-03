@@ -252,3 +252,6 @@ USE_X_FORWARDED_HOST = config("USE_X_FORWARDED_HOST", default=False, cast=bool)
 
 if USE_X_FORWARDED_HOST:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+
+AUDIO_CDN_DOMAIN = config("AUDIO_CDN_DOMAIN", default="https://audio.journalclub.blog")
