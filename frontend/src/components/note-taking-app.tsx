@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Plus, ArrowLeft, Trash2, MoreHorizontal, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { createEditor, Editor, Transforms, Element as SlateElement, Descendant } from 'slate';
-import { Slate, Editable, withReact } from 'slate-react';
+import { Slate, Editable, withReact, RenderElementProps, RenderLeafProps } from 'slate-react';
 import { withHistory } from 'slate-history';
 import { fetcher } from '@/lib/api';
+import { CustomElement } from '@/types/slate-custom-types';
 
 // Types - matching your backend structure
 interface ApiNote {
@@ -78,8 +79,8 @@ const transformApiNote = (apiNote: ApiNote): Note => ({
 
 // Slate helpers (unchanged)
 const isMarkActive = (editor: Editor, format: string) => {
-  const marks = Editor.marks(editor);
-  return marks ? (marks as any)[format] === true : false;
+  const marks = Editor.marks(editor) as Record<string, unknown> | null;
+  return marks ? marks[format] === true : false;
 };
 
 const toggleMark = (editor: Editor, format: string) => {
@@ -114,18 +115,22 @@ const toggleBlock = (editor: Editor, format: string) => {
   });
 
   const newProperties: Partial<SlateElement> = {
-    type: isActive ? 'paragraph' : isList ? 'list-item' : format,
+    type: (isActive ? 'paragraph' : isList ? 'list-item' : format) as CustomElement['type'],
   };
   Transforms.setNodes<SlateElement>(editor, newProperties);
 
   if (!isActive && isList) {
-    const block = { type: format, children: [] };
+    const block: SlateElement = {
+      type: format as CustomElement['type'],
+      children: [],
+    };
+
     Transforms.wrapNodes(editor, block);
   }
 };
 
 // Slate components (unchanged)
-const Element = ({ attributes, children, element }: any) => {
+const Element = ({ attributes, children, element }: RenderElementProps) => {
   switch (element.type) {
     case 'bulleted-list':
       return <ul {...attributes} className="list-disc ml-4 my-2">{children}</ul>;
@@ -144,7 +149,7 @@ const Element = ({ attributes, children, element }: any) => {
   }
 };
 
-const Leaf = ({ attributes, children, leaf }: any) => {
+const Leaf = ({ attributes, children, leaf }: RenderLeafProps) => {
   if (leaf.bold) {
     children = <strong>{children}</strong>;
   }
@@ -193,8 +198,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, disabl
   const editor = useMemo(() => withHistory(withReact(createEditor())), []);
   const [, forceUpdate] = useState({});
 
-  const renderElement = useCallback((props: any) => <Element {...props} />, []);
-  const renderLeaf = useCallback((props: any) => <Leaf {...props} />, []);
+  const renderElement = useCallback((props: RenderElementProps) => <Element {...props} />, []);
+  const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, []);
+
 
   const triggerUpdate = () => {
     forceUpdate({});
@@ -442,9 +448,10 @@ interface NoteEditorProps {
 
 const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave, onDelete, onBack, loading = false }) => {
   const [title, setTitle] = useState(note.title || 'New Note');
-  const [content, setContent] = useState<Descendant[]>(
-    note.content || [{ type: 'paragraph', children: [{ text: '' }] }]
-  );
+  const defaultContent: Descendant[] = [
+    { type: 'paragraph', children: [{ text: '' }] } as CustomElement
+  ];
+  const [content, setContent] = useState<Descendant[]>(note.content || defaultContent);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -625,26 +632,22 @@ const NotesApp: React.FC<NotesAppProps> = ({ episodeSlug }) => {
   };
 
   const handleSaveNote = async (noteData: CreateNoteData) => {
-    try {
-      if (currentNote.slug) {
-        // Update existing note
-        const updatedApiNote = await notesApi.updateNote(currentNote.slug, noteData);
-        const updatedNote = transformApiNote(updatedApiNote);
-        setNotes(prev => prev.map(note => 
-          note.slug === currentNote.slug ? updatedNote : note
-        ));
-      } else {
-        // Create new note
-        const newApiNote = await notesApi.createNote(episodeSlug, noteData);
-        const newNote = transformApiNote(newApiNote);
-        setNotes(prev => [newNote, ...prev]);
-      }
-      
-      setCurrentView('main');
-      setCurrentNote({});
-    } catch (err) {
-      throw err; // Let the editor handle the error
+    if (currentNote.slug) {
+      // Update existing note
+      const updatedApiNote = await notesApi.updateNote(currentNote.slug, noteData);
+      const updatedNote = transformApiNote(updatedApiNote);
+      setNotes(prev => prev.map(note => 
+        note.slug === currentNote.slug ? updatedNote : note
+      ));
+    } else {
+      // Create new note
+      const newApiNote = await notesApi.createNote(episodeSlug, noteData);
+      const newNote = transformApiNote(newApiNote);
+      setNotes(prev => [newNote, ...prev]);
     }
+    
+    setCurrentView('main');
+    setCurrentNote({});
   };
 
   const handleDeleteNote = async (slug: string) => {

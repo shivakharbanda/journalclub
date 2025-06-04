@@ -2,38 +2,16 @@ import { useEffect, useState } from "react"
 import { fetcher } from "@/lib/api"
 import Carousel from "./carousel-generic"
 import EpisodeCard from "./EpisodeCard"
+import { EpisodeFull } from "@/types/episode"
 
-type Tag = {
-    id: number
-    name: string
-    slug: string
-}
 
-type Topic = {
-    id: number
-    name: string
-    slug: string
-    description: string
-}
-
-type Episode = {
-    id: number
-    title: string
-    slug: string
-    summary_text: string
-    audio_file: string
-    created_at: string
-    image: string
-    tags: Tag[]
-    topics: Topic[]
-}
 
 export default function LatestEpisodesSection() {
-    const [episodes, setEpisodes] = useState<Episode[]>([])
+    const [episodes, setEpisodes] = useState<EpisodeFull[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        fetcher<Episode[]>("/episodes/")
+        fetcher<EpisodeFull[]>("/episodes/")
             .then(setEpisodes)
             .catch((err) => console.error("Latest Episodes API Error:", err))
             .finally(() => setLoading(false))

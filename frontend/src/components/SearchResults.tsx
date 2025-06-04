@@ -1,19 +1,9 @@
 import { useState, useCallback, useEffect } from 'react'
 import { fetcher } from '@/lib/api'
 import EpisodeCard from './EpisodeCard'
+import { EpisodeFull } from '@/types/episode'
 
-// Types
-type Episode = {
-    id: number
-    title: string
-    slug: string
-    summary_text: string
-    audio_file: string
-    created_at: string
-    image: string
-    tags: { id: number; name: string; slug: string }[]
-    topics: { id: number; name: string; slug: string; description: string }[]
-}
+
 
 // Debounce function
 function debounce<F extends (...args: any[]) => any>(func: F, delay: number): (...args: Parameters<F>) => void {
@@ -29,7 +19,7 @@ interface SearchResultsProps {
 }
 
 export function SearchResults({ searchQuery }: SearchResultsProps) {
-    const [searchResults, setSearchResults] = useState<Episode[]>([])
+    const [searchResults, setSearchResults] = useState<EpisodeFull[]>([])
     const [isSearching, setIsSearching] = useState(false)
 
     // Debounced search function
@@ -38,7 +28,7 @@ export function SearchResults({ searchQuery }: SearchResultsProps) {
             if (query.trim()) {
                 setIsSearching(true)
                 try {
-                    const results = await fetcher<Episode[]>(`/episodes/?q=${encodeURIComponent(query)}`)
+                    const results = await fetcher<EpisodeFull[]>(`/episodes/?q=${encodeURIComponent(query)}`)
                     setSearchResults(results)
                 } catch (error) {
                     console.error('Search error:', error)

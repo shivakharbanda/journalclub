@@ -7,40 +7,14 @@ import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled"
 import TagsList from "./TagsList"
 import TopicsList from "./TopicsList"
 import { PlayCircle } from "lucide-react"
-
-type Tag = {
-    id: number
-    name: string
-    slug: string
-}
-
-type Topic = {
-    id: number
-    name: string
-    slug: string
-    description: string
-}
-
-type Episode = {
-    id: number
-    title: string
-    slug: string
-    summary_text: string
-    audio_file: string
-    created_at: string
-    image: string,
-    image_url: string
-    audio_url: string
-    tags: Tag[]
-    topics: Topic[]
-}
+import { EpisodeCompact, EpisodeFull } from "@/types/episode"
 
 type Props = {
-    episode: Episode
+    episode: EpisodeFull
 }
 
 type CompactProps = {
-    episode: Episode
+    episode: EpisodeCompact
     progressPercentage?: number
 }
 
