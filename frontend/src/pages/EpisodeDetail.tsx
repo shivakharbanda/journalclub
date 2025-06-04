@@ -39,9 +39,9 @@ type Episode = {
     likes_count: number
     dislikes_count: number
     user_action?: 'like' | 'dislike' | null
-    is_saved: boolean,
-    audio_url: string,
-    image_url: string,
+    is_saved: boolean
+    audio_url: string
+    image_url: string
 }
 
 export default function EpisodeDetail() {
