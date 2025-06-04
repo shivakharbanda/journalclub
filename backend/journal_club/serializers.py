@@ -23,8 +23,10 @@ class EpisodeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     topics = TopicSerializer(many=True, read_only=True)
 
-    audio_file = serializers.SerializerMethodField()
-    image = serializers.SerializerMethodField()
+    audio_file = serializers.FileField()
+    audio_url = serializers.SerializerMethodField()
+    image = serializers.ImageField(allow_null=True, required=False)
+    image_url = serializers.SerializerMethodField()
 
     tag_ids = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True, write_only=True, source='tags'
@@ -32,6 +34,7 @@ class EpisodeSerializer(serializers.ModelSerializer):
     topic_ids = serializers.PrimaryKeyRelatedField(
         queryset=Topic.objects.all(), many=True, write_only=True, source='topics'
     )
+
 
     user_action = serializers.SerializerMethodField()
     is_saved = serializers.SerializerMethodField()  
@@ -42,15 +45,15 @@ class EpisodeSerializer(serializers.ModelSerializer):
             'sources', 'audio_file', 'image', 'created_at',
             'tags', 'tag_ids', 'topics', 'topic_ids', 
             'likes_count', 'dislikes_count', 'user_action',
-            'is_saved',
+            'is_saved', 'audio_url', 'image_url'
         ]
         read_only_fields = ['id', 'slug', 'created_at']
 
-    def get_audio_file(self, obj):
+    def get_audio_url(self, obj):
         request = self.context.get('request')
         return cdn_or_absolute(request, obj.audio_file, settings.AUDIO_CDN_DOMAIN)
 
-    def get_image(self, obj):
+    def get_image_url(self, obj):
         request = self.context.get('request')
         return cdn_or_absolute(request, obj.image, settings.AUDIO_CDN_DOMAIN)
 

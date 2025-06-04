@@ -28,7 +28,9 @@ type Episode = {
     summary_text: string
     audio_file: string
     created_at: string
-    image: string
+    image: string,
+    image_url: string
+    audio_url: string
     tags: Tag[]
     topics: Topic[]
 }
@@ -52,7 +54,7 @@ export default function EpisodeCard({ episode }: Props) {
             {/* Image with Play Overlay */}
             <Link to={`/episodes/${episode.slug}`} className="relative block group">
                 <img
-                    src={episode.image}
+                    src={episode.image_url}
                     alt={episode.title}
                     className="w-full h-36 object-cover rounded-t-md"
                 />

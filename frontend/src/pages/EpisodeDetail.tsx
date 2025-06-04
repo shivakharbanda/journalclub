@@ -39,7 +39,9 @@ type Episode = {
     likes_count: number
     dislikes_count: number
     user_action?: 'like' | 'dislike' | null
-    is_saved: boolean
+    is_saved: boolean,
+    audio_url: string,
+    image_url: string,
 }
 
 export default function EpisodeDetail() {
@@ -188,7 +190,7 @@ export default function EpisodeDetail() {
                             <div className="bg-card rounded-xl overflow-hidden shadow-xl">
                                 <div className="relative h-64 sm:h-80 md:h-96">
                                     <img
-                                        src={episode.image}
+                                        src={episode.image_url}
                                         alt={episode.title}
                                         className="object-cover w-full h-full"
                                     />
@@ -202,7 +204,7 @@ export default function EpisodeDetail() {
                                 
                                 <div className="p-6 sm:p-8 space-y-6">
                                     {/* Audio */}
-                                    <EpisodeAudio url={episode.audio_file} episodeSlug={episode.slug} />
+                                    <EpisodeAudio url={episode.audio_url} episodeSlug={episode.slug} />
 
                                     <TopicsList topics={episode.topics} />
                                     <TagsList tags={episode.tags} />
