@@ -46,7 +46,6 @@ export default function ContinueListeningCarousel() {
     return (
         <Carousel
             title="Continue Listening"
-            itemsToShow={4}
         >
             {episodes.map((episode) => (
                 <CompactEpisodeCard

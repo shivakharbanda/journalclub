@@ -24,7 +24,6 @@ export default function LatestEpisodesSection() {
         <Carousel
             title="Latest Episodes"
             subtitle="Fresh content just dropped! 🎙️"
-            itemsToShow={3}
         >
             {episodes.map((episode) => (
                 <EpisodeCard

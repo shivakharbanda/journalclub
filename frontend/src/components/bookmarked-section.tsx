@@ -47,7 +47,6 @@ export default function BookmarkedEpisodesCarousel() {
         <Carousel
             title="Your Saved Episodes"
             subtitle="Time to dive into those gems you bookmarked! 🎧✨"
-            itemsToShow={4}
         >
             {episodes.map((episode) => (
                 <CompactEpisodeCard
