@@ -8,6 +8,7 @@ from django.conf import settings
 
 from .utils import cdn_or_absolute 
 
+
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
@@ -95,9 +96,6 @@ class EpisodeSerializer(serializers.ModelSerializer):
             saved_content_type=ContentType.objects.get_for_model(Episode),
             saved_object_id=episode.id
         ).exists()
-
-
-
 
 User = get_user_model()
 

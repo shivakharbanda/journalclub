@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     "journal_club",
     'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
-    'journalnotes'
+    'journalnotes',
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -255,3 +256,33 @@ if USE_X_FORWARDED_HOST:
 
 
 AUDIO_CDN_DOMAIN = config("AUDIO_CDN_DOMAIN", default="https://audio.journalclub.blog")
+
+
+
+# ----------------------------
+# AWS S3 STORAGE CONFIG
+# ----------------------------
+
+AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME", default="ap-south-1")
+
+
+AWS_S3_FILE_OVERWRITE = True   #config("AWS_S3_FILE_OVERWRITE", default=True, cast=bool)
+# AWS_DEFAULT_ACL = config("AWS_DEFAULT_ACL", default=None)
+AWS_QUERYSTRING_AUTH = config("AWS_QUERYSTRING_AUTH", default=False, cast=bool)
+
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",  # Or S3 if you're serving static from S3
+    },
+}
+
+AWS_S3_OBJECT_PARAMETERS = {
+    "CacheControl": "max-age=86400"
+}
