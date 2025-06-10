@@ -14,6 +14,7 @@ from .views import (
     EpisodeLikeDislikeView,
     SaveContentView,
     SavedContentListView,
+    TagListCreateView,
 )
 
 urlpatterns = [
@@ -27,6 +28,7 @@ urlpatterns = [
     path('api/topics/', TopicListCreateView.as_view(), name='topic-list-create'),
     path('api/topics/<slug:slug>/', TopicDetailView.as_view(), name='topic-detail'),
 
+    path('api/tags/', TagListCreateView.as_view(), name='tag-list-create'),
     path('api/tags/<slug:slug>/', TagDetailView.as_view(), name='tag-detail'),
 
     # Ping

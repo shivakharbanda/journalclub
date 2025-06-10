@@ -105,10 +105,22 @@ class EpisodeListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = Episode.objects.all().order_by('-created_at')
+
         q = self.request.query_params.get('q')
+        tag_slugs = self.request.query_params.getlist('tag')
+        topic_slugs = self.request.query_params.getlist('topic')
+
         if q:
             queryset = queryset.filter(title__icontains=q)
-        return queryset
+
+        if tag_slugs:
+            queryset = queryset.filter(tags__slug__in=tag_slugs)
+
+        if topic_slugs:
+            queryset = queryset.filter(topics__slug__in=topic_slugs)
+
+        return queryset.distinct()
+
 
 class EpisodeDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Episode.objects.all()

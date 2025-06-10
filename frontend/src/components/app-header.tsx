@@ -11,8 +11,7 @@ import { Input } from "@/components/ui/input"
 import { ChevronDown, Search } from 'lucide-react'
 import { AppLogo } from './app-logo'
 import { AppSidebar } from './app-sidebar'
-import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@mui/material'
+import { AuthButtons } from './auth-btns'
 
 interface AppHeaderProps {
     onSearch?: (query: string) => void
@@ -25,8 +24,6 @@ export function AppHeader({ onSearch, searchValue = '' }: AppHeaderProps) {
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         onSearch?.(e.target.value)
     }
-
-    const { isAuthenticated, logout } = useAuth()
 
     return (
         <header className="bg-background sticky top-0 z-50 border-b">
@@ -105,32 +102,9 @@ export function AppHeader({ onSearch, searchValue = '' }: AppHeaderProps) {
                         </div>
                     </div>
 
-                    {/* Right side - placeholder for future user menu */}
-                    <div className="flex items-center space-x-2">
-                        {isAuthenticated ? (
-                            <Button
-                                variant="text"
-                                size="small"
-                                onClick={logout}
-                                className="text-sm font-medium"
-                                sx={{ textTransform: 'none' }}
-                            >
-                                Sign out
-                            </Button>
-                        ) : (
-                            <>
-                                <Link to="/login">
-                                    <Button variant="text" size="small" className="text-sm font-medium" sx={{ textTransform: 'none' }}>
-                                        Sign in
-                                    </Button>
-                                </Link>
-                                <Link to="/register">
-                                    <Button variant="outlined" size="small" className="text-sm font-medium" sx={{ textTransform: 'none' }}>
-                                        Sign up
-                                    </Button>
-                                </Link>
-                            </>
-                        )}
+                    {/* Right side - Auth buttons (hidden on mobile) */}
+                    <div className="hidden md:flex">
+                        <AuthButtons variant="header" />
                     </div>
 
                 </div>
@@ -138,33 +112,3 @@ export function AppHeader({ onSearch, searchValue = '' }: AppHeaderProps) {
         </header>
     )
 }
-
-
-
-/*{ <nav className="flex gap-1">
-                        
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant='ghost'
-                                    className='relative h-8 w-8 rounded-full cursor-pointer ml-2'>
-                                    <Avatar className='h-8 w-8'>
-                                        <AvatarImage src={baseUrl + '/avatars/shadcn.jpg'} alt='shadcn' />
-                                        <AvatarFallback className="rounded-lg">SC</AvatarFallback>
-                                    </Avatar>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className='w-56' align='end' forceMount>
-                                <DropdownMenuLabel className='font-normal'>
-                                    <div className='flex flex-col space-y-1'>
-                                        <p className='text-sm font-medium leading-none'>shadcn</p>
-                                        <p className='text-xs leading-none text-muted-foreground'>
-                                            m@example.com
-                                        </p>
-                                    </div>
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>Log out</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </nav> }*/
