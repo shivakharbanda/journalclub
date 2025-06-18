@@ -1,0 +1,168 @@
+/* Liquid Glass Player Styles */
+.liquidGlassPlayer {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Background distortion effect */
+.liquidGlassDistortion {
+    background: inherit;
+    filter: blur(0.5px);
+    transform: scale(1.1);
+    /* Create warped edges using CSS filters and transforms */
+    mask-image: radial-gradient(ellipse at center, black 60%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 60%, transparent 100%);
+}
+
+/* Main glass effect layer */
+.liquidGlassEffect {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    
+    /* Drop shadow for depth */
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.35),
+        /* Inner shadows for faux outline - top-left gleam */
+        inset 0.5px 1px 1px rgba(255, 255, 255, 0.9),
+        /* Inner shadows for faux outline - bottom-right gleam (brighter) */
+        inset -0.5px -1px 1px rgba(255, 255, 255, 1);
+    
+    /* Subtle border for additional definition */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    
+    /* Animation */
+    animation: glassShimmer 3s ease-in-out infinite;
+}
+
+/* Override react-h5-audio-player styles for glass effect */
+.liquidGlassPlayer :global(.rhap_container) {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.liquidGlassPlayer :global(.rhap_time) {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.liquidGlassPlayer :global(.rhap_progress-bar) {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.liquidGlassPlayer :global(.rhap_progress-filled) {
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+.liquidGlassPlayer :global(.rhap_progress-indicator) {
+    background-color: white;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+.liquidGlassPlayer :global(.rhap_download-progress) {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.liquidGlassPlayer :global(.rhap_button-clear) {
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 0.2s ease;
+}
+
+.liquidGlassPlayer :global(.rhap_button-clear:hover) {
+    color: white;
+    transform: scale(1.1);
+}
+
+.liquidGlassPlayer :global(.rhap_volume-bar) {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.liquidGlassPlayer :global(.rhap_volume-indicator) {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+/* Additional glass refraction effect on hover */
+.liquidGlassEffect:hover {
+    background: rgba(0, 0, 0, 0.35);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.4),
+        inset 0.5px 1px 1px rgba(255, 255, 255, 0.95),
+        inset -0.5px -1px 1px rgba(255, 255, 255, 1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .liquidGlassEffect {
+        backdrop-filter: blur(6px) saturate(180%);
+        -webkit-backdrop-filter: blur(6px) saturate(180%);
+    }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .liquidGlassEffect {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+}
+
+/* Light mode adjustments */
+@media (prefers-color-scheme: light) {
+    .liquidGlassEffect {
+        background: rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px) saturate(180%);
+        -webkit-backdrop-filter: blur(10px) saturate(180%);
+    }
+    
+    .liquidGlassPlayer :global(.rhap_container) {
+        color: rgba(0, 0, 0, 0.9);
+    }
+    
+    .liquidGlassPlayer :global(.rhap_time) {
+        color: rgba(0, 0, 0, 0.7);
+    }
+    
+    .liquidGlassPlayer :global(.rhap_progress-bar) {
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    .liquidGlassPlayer :global(.rhap_progress-filled) {
+        background-color: rgba(0, 0, 0, 0.7);
+    }
+    
+    .liquidGlassPlayer :global(.rhap_progress-indicator) {
+        background-color: rgba(0, 0, 0, 0.9);
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .liquidGlassPlayer :global(.rhap_button-clear) {
+        color: rgba(0, 0, 0, 0.8);
+    }
+    
+    .liquidGlassPlayer :global(.rhap_button-clear:hover) {
+        color: rgba(0, 0, 0, 1);
+    }
+}
+
+/* Animation for subtle glass shimmer effect */
+@keyframes glassShimmer {
+    0% {
+        box-shadow: 
+            0 2px 8px rgba(0, 0, 0, 0.35),
+            inset 0.5px 1px 1px rgba(255, 255, 255, 0.9),
+            inset -0.5px -1px 1px rgba(255, 255, 255, 1);
+    }
+    50% {
+        box-shadow: 
+            0 2px 8px rgba(0, 0, 0, 0.35),
+            inset 0.5px 1px 1px rgba(255, 255, 255, 0.95),
+            inset -0.5px -1px 1px rgba(255, 255, 255, 1);
+    }
+    100% {
+        box-shadow: 
+            0 2px 8px rgba(0, 0, 0, 0.35),
+            inset 0.5px 1px 1px rgba(255, 255, 255, 0.9),
+            inset -0.5px -1px 1px rgba(255, 255, 255, 1);
+    }
+}

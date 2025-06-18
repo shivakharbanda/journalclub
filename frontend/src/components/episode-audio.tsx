@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react"
+import AudioPlayer, { RHAP_UI } from 'react-h5-audio-player'
+import 'react-h5-audio-player/lib/styles.css'
 import { fetcher } from "@/lib/api"
+import styles from '@/styles/episode-audio.module.css'
 
 type Props = {
     url: string
@@ -7,10 +10,11 @@ type Props = {
 }
 
 export default function EpisodeAudio({ url, episodeSlug }: Props) {
-    const audioRef = useRef<HTMLAudioElement | null>(null)
+    const playerRef = useRef<AudioPlayer>(null)
     const lastPercentSent = useRef<number>(0)
     const intervalRef = useRef<NodeJS.Timeout | null>(null)
     const initLogged = useRef<boolean>(false)
+    const hasStartedFromPosition = useRef<boolean>(false)
 
     const [startFrom, setStartFrom] = useState<number>(0)
 
@@ -32,7 +36,7 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
     }, [episodeSlug])
 
     const saveProgress = async (position: number, completed = false) => {
-        const audio = audioRef.current
+        const audio = playerRef.current?.audio?.current
         if (!audio || isNaN(audio.duration)) return
 
         try {
@@ -51,11 +55,12 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
     }
 
     const handleCanPlay = () => {
-        const audio = audioRef.current
+        const audio = playerRef.current?.audio?.current
         if (!audio || initLogged.current) return
 
-        if (startFrom > 0) {
+        if (startFrom > 0 && !hasStartedFromPosition.current) {
             audio.currentTime = startFrom
+            hasStartedFromPosition.current = true
         }
 
         saveProgress(audio.currentTime, false)
@@ -63,7 +68,7 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
     }
 
     const handlePlay = () => {
-        const audio = audioRef.current
+        const audio = playerRef.current?.audio?.current
         if (!audio || isNaN(audio.duration)) return
 
         if (!intervalRef.current) {
@@ -81,7 +86,8 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
     }
 
     const handlePause = () => {
-        const pos = audioRef.current?.currentTime || 0
+        const audio = playerRef.current?.audio?.current
+        const pos = audio?.currentTime || 0
         saveProgress(pos, false)
 
         if (intervalRef.current) {
@@ -91,7 +97,8 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
     }
 
     const handleEnded = () => {
-        const dur = audioRef.current?.duration || 0
+        const audio = playerRef.current?.audio?.current
+        const dur = audio?.duration || 0
         saveProgress(dur, true)
 
         if (intervalRef.current) {
@@ -101,17 +108,50 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
     }
 
     return (
-        <audio
-            ref={audioRef}
-            controls
-            className="w-full mt-4 rounded-md"
-            onCanPlay={handleCanPlay}
-            onPlay={handlePlay}
-            onPause={handlePause}
-            onEnded={handleEnded}
-        >
-            <source src={url} type="audio/wav" />
-            Your browser does not support the audio element.
-        </audio>
+        <div className="w-full mt-4 relative">
+            {/* Liquid glass container */}
+            <div className={styles.liquidGlassPlayer}>
+                {/* Background distortion layer */}
+                <div className="absolute inset-0 overflow-hidden rounded-xl">
+                    <div className={`${styles.liquidGlassDistortion} absolute inset-[-25px]`} />
+                </div>
+                
+                {/* Glass effect layer */}
+                <div className={`${styles.liquidGlassEffect} absolute inset-0 rounded-xl`} />
+                
+                {/* Audio player content */}
+                <div className="relative z-10">
+                    <AudioPlayer
+                        ref={playerRef}
+                        src={url}
+                        onCanPlay={handleCanPlay}
+                        onPlay={handlePlay}
+                        onPause={handlePause}
+                        onEnded={handleEnded}
+                        showJumpControls={true}
+                        showSkipControls={false}
+                        showDownloadProgress={true}
+                        progressJumpSteps={{
+                            backward: 10000, // 10 seconds
+                            forward: 10000   // 10 seconds
+                        }}
+                        customProgressBarSection={[
+                            RHAP_UI.CURRENT_TIME,
+                            RHAP_UI.PROGRESS_BAR,
+                            RHAP_UI.DURATION
+                        ]}
+                        customControlsSection={[
+                            RHAP_UI.MAIN_CONTROLS,
+                            RHAP_UI.VOLUME_CONTROLS
+                        ]}
+                        style={{
+                            borderRadius: '12px',
+                            backgroundColor: 'transparent',
+                            boxShadow: 'none'
+                        }}
+                    />
+                </div>
+            </div>
+        </div>
     )
 }

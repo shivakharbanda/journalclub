@@ -188,80 +188,93 @@ export default function EpisodeDetail() {
                     <div className="lg:col-span-3">
                         {episode.image && (
                             <div className="bg-card rounded-xl overflow-hidden shadow-xl">
-                                <div className="relative h-64 sm:h-80 md:h-96">
-                                    <img
-                                        src={episode.image_url}
-                                        alt={episode.title}
-                                        className="object-cover w-full h-full"
-                                    />
-                                    <div className="absolute inset-0 bg-black/50 flex flex-col justify-end p-6 sm:p-8">
-                                        <h1 className="text-3xl sm:text-4xl font-bold text-amber-400 mb-2" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.8)'}}>{episode.title}</h1>
-                                        <p className="text-muted-foreground text-sm">
-                                            {format(new Date(episode.created_at), "MMMM do, yyyy")}
-                                        </p>
+                                <div className="relative">
+                                    <div className="relative h-64 sm:h-80 md:h-96">
+                                        <img
+                                            src={episode.image_url}
+                                            alt={episode.title}
+                                            className="object-cover w-full h-full"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30"></div>
+                                    </div>
+                                    
+                                    {/* Audio Player moved here */}
+                                    <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 pb-4 sm:pb-6">
+                                        <EpisodeAudio url={episode.audio_url} episodeSlug={episode.slug} />
                                     </div>
                                 </div>
                                 
-                                <div className="p-6 sm:p-8 space-y-6">
-                                    {/* Audio */}
-                                    <EpisodeAudio url={episode.audio_url} episodeSlug={episode.slug} />
+                                <div className="p-6 sm:p-8 space-y-4">
+                                    {/* Title and Date */}
+                                    <div className="space-y-1">
+                                        <h1 className="text-xl sm:text-2xl font-bold text-amber-400 leading-tight">{episode.title}</h1>
+                                        <div className="text-muted-foreground text-sm">
+                                            {format(new Date(episode.created_at), "MMMM do, yyyy")}
+                                        </div>
+                                    </div>
+
+                                    {/* Engagement Buttons */}
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-6">
+                                            <button 
+                                                onClick={handleLike}
+                                                className={`flex items-center space-x-2 transition-colors duration-150 ${
+                                                    liked 
+                                                        ? 'text-blue-400' 
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                }`}
+                                            >
+                                                <ThumbsUp className={`h-5 w-5 ${liked ? 'fill-current' : ''}`} />
+                                                <span>{likeCount}</span>
+                                            </button>
+                                            
+                                            <button 
+                                                onClick={handleDislike}
+                                                className={`flex items-center space-x-2 transition-colors duration-150 ${
+                                                    disliked 
+                                                        ? 'text-red-400' 
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                }`}
+                                            >
+                                                <ThumbsDown className={`h-5 w-5 ${disliked ? 'fill-current' : ''}`} />
+                                                <span>{dislikeCount}</span>
+                                            </button>
+                                        </div>
+                                        
+                                        <div className="flex items-center space-x-4">
+                                            <button 
+                                                onClick={handleSave}
+                                                className={`flex items-center space-x-2 transition-colors duration-150 ${
+                                                    saved 
+                                                        ? 'text-yellow-400' 
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                }`}
+                                            >
+                                                <Bookmark className={`h-5 w-5 ${saved ? 'fill-current' : ''}`} />
+                                                <span>Save</span>
+                                            </button>
+                                            
+                                            <button 
+                                                onClick={handleShare}
+                                                className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors duration-150"
+                                            >
+                                                <Share2 className="h-5 w-5" />
+                                                <span>Share</span>
+                                            </button>
+                                        </div>
+                                    </div>
 
                                     <TopicsList topics={episode.topics} />
                                     <TagsList tags={episode.tags} />
 
-                                    {/* Summary */}
-                                    <section className="prose prose-invert max-w-none">
-                                        <h2 className="text-2xl font-semibold text-foreground mb-4">Summary</h2>
-                                        <div className="text-muted-foreground">
-                                            <ReactMarkdown>{episode.summary_text}</ReactMarkdown>
+                                    {/* Separator */}
+                                    <div className="border-t border-border pt-6">
+                                        {/* Episode content - no "Summary" header */}
+                                        <div className="prose prose-invert max-w-none">
+                                            <div className="text-muted-foreground">
+                                                <ReactMarkdown>{episode.summary_text}</ReactMarkdown>
+                                            </div>
                                         </div>
-                                    </section>
-
-                                    {/* Engagement Buttons */}
-                                    <div className="pt-6 border-t border-border flex items-center space-x-6">
-                                        <button 
-                                            onClick={handleLike}
-                                            className={`flex items-center space-x-2 transition-colors duration-150 ${
-                                                liked 
-                                                    ? 'text-blue-400' 
-                                                    : 'text-muted-foreground hover:text-foreground'
-                                            }`}
-                                        >
-                                            <ThumbsUp className={`h-5 w-5 ${liked ? 'fill-current' : ''}`} />
-                                            <span>Like ({likeCount})</span>
-                                        </button>
-                                        
-                                        <button 
-                                            onClick={handleDislike}
-                                            className={`flex items-center space-x-2 transition-colors duration-150 ${
-                                                disliked 
-                                                    ? 'text-red-400' 
-                                                    : 'text-muted-foreground hover:text-foreground'
-                                            }`}
-                                        >
-                                            <ThumbsDown className={`h-5 w-5 ${disliked ? 'fill-current' : ''}`} />
-                                            <span>Dislike ({dislikeCount})</span>
-                                        </button>
-                                        
-                                        <button 
-                                            onClick={handleSave}
-                                            className={`flex items-center space-x-2 transition-colors duration-150 ml-auto ${
-                                                saved 
-                                                    ? 'text-yellow-400' 
-                                                    : 'text-muted-foreground hover:text-foreground'
-                                            }`}
-                                        >
-                                            <Bookmark className={`h-5 w-5 ${saved ? 'fill-current' : ''}`} />
-                                            <span>Save</span>
-                                        </button>
-                                        
-                                        <button 
-                                            onClick={handleShare}
-                                            className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors duration-150"
-                                        >
-                                            <Share2 className="h-5 w-5" />
-                                            <span>Share</span>
-                                        </button>
                                     </div>
                                 </div>
                             </div>
