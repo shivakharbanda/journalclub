@@ -129,6 +129,7 @@ function SidebarProvider({
       <TooltipProvider delayDuration={0}>
         <div
           data-slot="sidebar-wrapper"
+          data-state={state}          
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH,
@@ -137,7 +138,10 @@ function SidebarProvider({
             } as React.CSSProperties
           }
           className={cn(
-            "group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full",
+             "transition-[width] duration-200 ease-linear",
+             state === "collapsed"
+              ? "w-[var(--sidebar-width-icon)]"
+              : "w-full",
             className
           )}
           {...props}

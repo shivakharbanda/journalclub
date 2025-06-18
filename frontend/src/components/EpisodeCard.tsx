@@ -2,7 +2,6 @@ import { useState } from "react"
 import { Card, CardTitle, CardDescription } from "@/components/ui/card"
 import { Link } from "react-router-dom"
 import ReactMarkdown from "react-markdown"
-import PlayCircleFilledIcon from "@mui/icons-material/PlayCircleFilled"
 
 import TagsList from "./TagsList"
 import TopicsList from "./TopicsList"
@@ -21,7 +20,7 @@ type CompactProps = {
 export default function EpisodeCard({ episode }: Props) {
     const [expanded, setExpanded] = useState(false)
 
-    const needsTruncation = episode.summary_text.length > 300
+    const needsTruncation = episode.description.length > 80 // Much shorter
 
     return (
         <Card className="bg-card border border-border shadow-sm hover:scale-[1.005] transition-transform duration-200">
@@ -30,48 +29,51 @@ export default function EpisodeCard({ episode }: Props) {
                 <img
                     src={episode.image_url}
                     alt={episode.title}
-                    className="w-full h-36 object-cover rounded-t-md"
+                    className="w-full h-28 object-cover rounded-t-md" // Even smaller
                 />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-t-md">
-                    <PlayCircleFilledIcon
-                        className="text-white drop-shadow-lg"
-                        style={{ fontSize: '2.5rem' }}
-                    />
+                {/* Play Button - Shows on hover */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <PlayCircle className="h-12 w-12 text-white drop-shadow-lg" />
                 </div>
             </Link>
 
-            <div className="px-3 py-2 space-y-2">
-                <div className="flex flex-col gap-0.5">
-                    <CardTitle className="text-amber-400 text-base font-semibold leading-snug">
+            {/* Compact content container */}
+            <div className="p-2 space-y-1.5">
+                {/* Title and Date - Tighter spacing */}
+                <div className="space-y-0.5">
+                    <CardTitle className="text-amber-400 text-sm font-semibold leading-tight line-clamp-2">
                         {episode.title}
                     </CardTitle>
-                    <p className="text-xs text-muted-foreground leading-tight">
+                    <p className="text-xs text-muted-foreground">
                         {new Intl.DateTimeFormat("en-US", {
-                            year: "numeric",
-                            month: "long",
+                            month: "short",
                             day: "numeric"
                         }).format(new Date(episode.created_at))}
                     </p>
                 </div>
 
-                <CardDescription className="text-muted-foreground text-sm leading-snug">
-                    <ReactMarkdown>
-                        {expanded
-                            ? episode.summary_text
-                            : `${episode.summary_text.slice(0, 300).trim()}...`}
-                    </ReactMarkdown>
+                {/* Compact Description */}
+                <CardDescription className="text-muted-foreground text-xs leading-tight">
+                    <div className="prose prose-xs max-w-none [&>*]:my-0">
+                        <ReactMarkdown>
+                            {expanded
+                                ? episode.description
+                                : `${episode.description.slice(0, 80).trim()}${needsTruncation ? '...' : ''}`}
+                        </ReactMarkdown>
+                    </div>
 
                     {needsTruncation && (
                         <button
                             onClick={() => setExpanded(!expanded)}
-                            className="text-primary hover:underline font-medium ml-1"
+                            className="text-primary hover:underline font-medium text-xs ml-1"
                         >
-                            {expanded ? "Show less" : "Read more"}
+                            {expanded ? "Less" : "More"}
                         </button>
                     )}
                 </CardDescription>
 
-                <div className="pt-1">
+                {/* Compact Topics and Tags */}
+                <div className="space-y-1">
                     <TopicsList topics={episode.topics} />
                     <TagsList tags={episode.tags} />
                 </div>
@@ -79,8 +81,6 @@ export default function EpisodeCard({ episode }: Props) {
         </Card>
     )
 }
-
-
 // Compact version for carousels
 export function CompactEpisodeCard({ episode, progressPercentage = 0 }: CompactProps) {
     return (
