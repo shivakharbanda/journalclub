@@ -4,6 +4,7 @@ import { AppFooter } from './app-footer'
 import { SearchResults } from './SearchResults'
 import { useState } from 'react'
 import { BottomNav } from './app-bottomnav'
+import { InstallPrompt } from './InstallPrompt'
 
 export function AppLayout() {
     const [searchQuery, setSearchQuery] = useState('')
@@ -35,6 +36,7 @@ export function AppLayout() {
                 <AppFooter />
             </div>
             <BottomNav/>
+            <InstallPrompt />
         </div>
     )
 }
