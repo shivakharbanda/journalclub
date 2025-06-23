@@ -14,9 +14,25 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: "prompt",
+        workbox: {
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-cache',
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 365 // 365 days
+                },
+              }
+            }
+          ]
+        },
         manifest: {
-          name: "Your App Name",
-          short_name: "App",
+          name: "Journal Club",
+          short_name: "Journal Club",
           start_url: "/",
           display: "standalone",
           background_color: "#ffffff",

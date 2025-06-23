@@ -1,51 +1,70 @@
-import { useEffect, useState } from 'react'
+import { Smartphone, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { usePWAInstall } from '@/hooks/use-pwa-install'
 
-type BeforeInstallPromptEvent = Event & {
-  readonly platforms: string[]
-  readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
-  prompt: () => Promise<void>
-}
 
-export function InstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [visible, setVisible] = useState(false)
+// Floating install prompt for mobile
+import React from 'react'
 
-  useEffect(() => {
-    const handler = (e: Event) => {
-      // Check and cast to correct type
-      const promptEvent = e as BeforeInstallPromptEvent
-      e.preventDefault()
-      setDeferredPrompt(promptEvent)
-      setVisible(true)
-    }
+export function InstallPrompt(): React.JSX.Element | null {
+  const { 
+    isInstallAvailable, 
+    promptInstall, 
+    dismissInstall, 
+    isStandalone 
+  } = usePWAInstall()
 
-    window.addEventListener('beforeinstallprompt', handler)
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler)
-    }
-  }, [])
-
-  const install = async () => {
-    if (!deferredPrompt) return
-    await deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-    if (outcome === 'accepted') {
-      console.log('User accepted the install prompt')
-    } else {
-      console.log('User dismissed the install prompt')
-    }
-    setDeferredPrompt(null)
-    setVisible(false)
+  if (!isInstallAvailable || isStandalone) {
+    return null
   }
 
-  if (!visible) return null
+  const handleInstall = async (): Promise<void> => {
+    await promptInstall()
+  }
+
+  const handleDismiss = (): void => {
+    dismissInstall()
+  }
 
   return (
-    <div className="fixed bottom-20 left-0 right-0 mx-auto w-fit px-4 py-2 bg-accent text-accent-foreground rounded shadow-md z-50">
-      <button onClick={install} className="px-4 py-2 bg-primary text-white rounded">
-        Install Journal Club
-      </button>
+    <div className="fixed bottom-4 left-4 right-4 mx-auto max-w-sm bg-card border border-border rounded-lg shadow-lg p-4 z-50 md:hidden">
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 mt-0.5">
+          <Smartphone className="h-5 w-5 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-medium text-card-foreground">
+            Install Journal Club
+          </h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            Add to your home screen for quick access
+          </p>
+        </div>
+        <button
+          onClick={handleDismiss}
+          className="flex-shrink-0 text-muted-foreground hover:text-foreground"
+          aria-label="Dismiss install prompt"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="flex gap-2 mt-3">
+        <Button
+          size="sm"
+          onClick={handleInstall}
+          className="flex-1"
+        >
+          Install
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDismiss}
+          className="flex-1"
+        >
+          Not now
+        </Button>
+      </div>
     </div>
   )
 }

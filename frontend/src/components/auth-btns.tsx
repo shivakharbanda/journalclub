@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@mui/material'
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
+import { usePWAInstall } from '@/hooks/use-pwa-install'
+import { Download } from 'lucide-react'
 
 interface AuthButtonsProps {
     variant: 'header' | 'sidebar'
@@ -10,6 +12,7 @@ interface AuthButtonsProps {
 
 export function AuthButtons({ variant, onItemClick }: AuthButtonsProps) {
     const { isAuthenticated, logout } = useAuth()
+    const { isInstallAvailable, promptInstall, isStandalone } = usePWAInstall()
 
     const handleLogout = () => {
         logout()
@@ -17,6 +20,11 @@ export function AuthButtons({ variant, onItemClick }: AuthButtonsProps) {
     }
 
     const handleLinkClick = () => {
+        onItemClick?.()
+    }
+
+    const handleInstall = async (): Promise<void> => {
+        await promptInstall()
         onItemClick?.()
     }
 
@@ -64,16 +72,34 @@ export function AuthButtons({ variant, onItemClick }: AuthButtonsProps) {
     // Sidebar variant - completely different structure
     if (isAuthenticated) {
         return (
-            <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleLogout}>
-                    <span>Sign out</span>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
+            <>
+                {(isInstallAvailable && !isStandalone) && (
+                    <SidebarMenuItem>
+                        <SidebarMenuButton onClick={handleInstall}>
+                            <Download className="h-4 w-4" />
+                            <span>Install App</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                )}
+                <SidebarMenuItem>
+                    <SidebarMenuButton onClick={handleLogout}>
+                        <span>Sign out</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </>
         )
     }
 
     return (
         <>
+            {(isInstallAvailable && !isStandalone) && (
+                <SidebarMenuItem>
+                    <SidebarMenuButton onClick={handleInstall}>
+                        <Download className="h-4 w-4" />
+                        <span>Install App</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            )}
             <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                     <Link to="/login" onClick={handleLinkClick}>

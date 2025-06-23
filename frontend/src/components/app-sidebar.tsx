@@ -105,7 +105,6 @@ export function AppSidebar() {
                                                     </SidebarMenuItem>
                                                 )
                                             ))}
-                                            
                                             {/* Auth Section - Only visible on mobile */}
                                             <div className="border-t border-border mt-2 pt-2">
                                                 <AuthButtons variant="sidebar" />
