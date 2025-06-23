@@ -16,6 +16,7 @@ export default function EpisodeAudio({ url, episodeSlug, title, imageUrl, artist
     const playerRef = useRef<AudioPlayer>(null)
     const lastPercentSent = useRef<number>(0)
     const intervalRef = useRef<NodeJS.Timeout | null>(null)
+    const positionUpdateRef = useRef<NodeJS.Timeout | null>(null)
     const initLogged = useRef<boolean>(false)
     const hasStartedFromPosition = useRef<boolean>(false)
 
@@ -37,6 +38,7 @@ export default function EpisodeAudio({ url, episodeSlug, title, imageUrl, artist
 
         return () => {
             if (intervalRef.current) clearInterval(intervalRef.current)
+            if (positionUpdateRef.current) clearInterval(positionUpdateRef.current)
         }
     }, [episodeSlug])
 
@@ -59,6 +61,108 @@ export default function EpisodeAudio({ url, episodeSlug, title, imageUrl, artist
         }
     }
 
+    const updateMediaSessionPositionState = () => {
+        const audio = playerRef.current?.audio?.current
+        if (!audio || isNaN(audio.duration)) return
+
+        try {
+            if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+                navigator.mediaSession.setPositionState({
+                    duration: audio.duration,
+                    playbackRate: audio.playbackRate || 1,
+                    position: audio.currentTime
+                })
+            }
+        } catch (err) {
+            console.error("Failed to update position state:", err)
+        }
+    }
+
+    const setupMediaSession = () => {
+        if (!('mediaSession' in navigator)) return
+
+        try {
+            const audio = playerRef.current?.audio?.current
+            if (!audio) return
+
+            // Set metadata
+            navigator.mediaSession.metadata = new window.MediaMetadata({
+                title,
+                artist,
+                album: "Podcast Series",
+                artwork: [
+                    { src: imageUrl, sizes: '96x96', type: 'image/png' },
+                    { src: imageUrl, sizes: '128x128', type: 'image/png' },
+                    { src: imageUrl, sizes: '192x192', type: 'image/png' },
+                    { src: imageUrl, sizes: '256x256', type: 'image/png' },
+                    { src: imageUrl, sizes: '384x384', type: 'image/png' },
+                    { src: imageUrl, sizes: '512x512', type: 'image/png' }
+                ]
+            })
+
+            // Set action handlers
+            navigator.mediaSession.setActionHandler('play', () => {
+                audio.play().catch(console.error)
+            })
+
+            navigator.mediaSession.setActionHandler('pause', () => {
+                audio.pause()
+            })
+
+            navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+                const skipTime = details?.seekOffset ?? 10
+                const newTime = Math.max(audio.currentTime - skipTime, 0)
+                audio.currentTime = newTime
+                updateMediaSessionPositionState()
+                saveProgress(newTime, false)
+            })
+
+            navigator.mediaSession.setActionHandler('seekforward', (details) => {
+                const skipTime = details?.seekOffset ?? 10
+                const newTime = Math.min(audio.currentTime + skipTime, audio.duration)
+                audio.currentTime = newTime
+                updateMediaSessionPositionState()
+                saveProgress(newTime, false)
+            })
+
+            // Handle seek to specific position
+            navigator.mediaSession.setActionHandler('seekto', (details) => {
+                if (details.seekTime !== undefined && details.seekTime >= 0) {
+                    const newTime = Math.min(details.seekTime, audio.duration)
+                    audio.currentTime = newTime
+                    updateMediaSessionPositionState()
+                    saveProgress(newTime, false)
+                }
+            })
+
+            // Optional: Handle previous/next track if you have playlist functionality
+            // navigator.mediaSession.setActionHandler('previoustrack', () => {
+            //     // Handle previous episode
+            // })
+            // navigator.mediaSession.setActionHandler('nexttrack', () => {
+            //     // Handle next episode
+            // })
+
+        } catch (err) {
+            console.error("Failed to setup media session:", err)
+        }
+    }
+
+    const startPositionUpdates = () => {
+        if (positionUpdateRef.current) return // Already running
+
+        positionUpdateRef.current = setInterval(() => {
+            updateMediaSessionPositionState()
+        }, 1000) // Update every second for smooth seeking
+    }
+
+    const stopPositionUpdates = () => {
+        if (positionUpdateRef.current) {
+            clearInterval(positionUpdateRef.current)
+            positionUpdateRef.current = null
+        }
+    }
+
     const handleCanPlay = () => {
         const audio = playerRef.current?.audio?.current
         if (!audio || initLogged.current) return
@@ -68,6 +172,10 @@ export default function EpisodeAudio({ url, episodeSlug, title, imageUrl, artist
             hasStartedFromPosition.current = true
         }
 
+        // Setup media session once we know the duration
+        setupMediaSession()
+        updateMediaSessionPositionState()
+
         saveProgress(audio.currentTime, false)
         initLogged.current = true
     }
@@ -76,32 +184,14 @@ export default function EpisodeAudio({ url, episodeSlug, title, imageUrl, artist
         const audio = playerRef.current?.audio?.current
         if (!audio || isNaN(audio.duration)) return
 
-        if (!('mediaSession' in navigator)) return
+        // Ensure media session is set up
+        setupMediaSession()
+        updateMediaSessionPositionState()
 
-        navigator.mediaSession.metadata = new window.MediaMetadata({
-            title,
-            artist,
-            album: "Podcast Series",
-            artwork: [
-                { src: imageUrl, sizes: '512x512', type: 'image/png' }
-            ]
-        })
+        // Start position updates for smooth seeking
+        startPositionUpdates()
 
-        navigator.mediaSession.setActionHandler('play', () => {
-            playerRef.current?.audio?.current?.play()
-        })
-        navigator.mediaSession.setActionHandler('pause', () => {
-            playerRef.current?.audio?.current?.pause()
-        })
-        navigator.mediaSession.setActionHandler('seekbackward', () => {
-            const audio = playerRef.current?.audio?.current
-            if (audio) audio.currentTime = Math.max(audio.currentTime - 10, 0)
-        })
-        navigator.mediaSession.setActionHandler('seekforward', () => {
-            const audio = playerRef.current?.audio?.current
-            if (audio) audio.currentTime = Math.min(audio.currentTime + 10, audio.duration)
-        })
-
+        // Start progress tracking
         if (!intervalRef.current) {
             intervalRef.current = setInterval(() => {
                 const current = audio.currentTime
@@ -121,6 +211,10 @@ export default function EpisodeAudio({ url, episodeSlug, title, imageUrl, artist
         const pos = audio?.currentTime || 0
         saveProgress(pos, false)
 
+        // Stop position updates
+        stopPositionUpdates()
+
+        // Stop progress tracking
         if (intervalRef.current) {
             clearInterval(intervalRef.current)
             intervalRef.current = null
@@ -132,11 +226,24 @@ export default function EpisodeAudio({ url, episodeSlug, title, imageUrl, artist
         const dur = audio?.duration || 0
         saveProgress(dur, true)
 
+        // Stop all intervals
+        stopPositionUpdates()
         if (intervalRef.current) {
             clearInterval(intervalRef.current)
             intervalRef.current = null
         }
     }
+
+    // Handle seeking from the player itself
+    const handleSeeked = () => {
+        const audio = playerRef.current?.audio?.current
+        if (!audio) return
+
+        updateMediaSessionPositionState()
+        saveProgress(audio.currentTime, false)
+    }
+
+
 
     return (
         <div className="w-full mt-4 relative">
@@ -153,6 +260,7 @@ export default function EpisodeAudio({ url, episodeSlug, title, imageUrl, artist
                         onPlay={handlePlay}
                         onPause={handlePause}
                         onEnded={handleEnded}
+                        onSeeked={handleSeeked}
                         showJumpControls={true}
                         showSkipControls={false}
                         showDownloadProgress={true}
