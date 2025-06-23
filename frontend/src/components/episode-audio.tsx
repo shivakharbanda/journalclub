@@ -40,34 +40,6 @@ export default function EpisodeAudio({ url, episodeSlug, title, imageUrl, artist
         }
     }, [episodeSlug])
 
-    useEffect(() => {
-        if (!('mediaSession' in navigator)) return
-
-        navigator.mediaSession.metadata = new window.MediaMetadata({
-            title,
-            artist,
-            album: "Podcast Series",
-            artwork: [
-                { src: imageUrl, sizes: '512x512', type: 'image/png' }
-            ]
-        })
-
-        navigator.mediaSession.setActionHandler('play', () => {
-            playerRef.current?.audio?.current?.play()
-        })
-        navigator.mediaSession.setActionHandler('pause', () => {
-            playerRef.current?.audio?.current?.pause()
-        })
-        navigator.mediaSession.setActionHandler('seekbackward', () => {
-            const audio = playerRef.current?.audio?.current
-            if (audio) audio.currentTime = Math.max(audio.currentTime - 10, 0)
-        })
-        navigator.mediaSession.setActionHandler('seekforward', () => {
-            const audio = playerRef.current?.audio?.current
-            if (audio) audio.currentTime = Math.min(audio.currentTime + 10, audio.duration)
-        })
-    }, [title, imageUrl, artist])
-
     const saveProgress = async (position: number, completed = false) => {
         const audio = playerRef.current?.audio?.current
         if (!audio || isNaN(audio.duration)) return
@@ -103,6 +75,32 @@ export default function EpisodeAudio({ url, episodeSlug, title, imageUrl, artist
     const handlePlay = () => {
         const audio = playerRef.current?.audio?.current
         if (!audio || isNaN(audio.duration)) return
+
+        if (!('mediaSession' in navigator)) return
+
+        navigator.mediaSession.metadata = new window.MediaMetadata({
+            title,
+            artist,
+            album: "Podcast Series",
+            artwork: [
+                { src: imageUrl, sizes: '512x512', type: 'image/png' }
+            ]
+        })
+
+        navigator.mediaSession.setActionHandler('play', () => {
+            playerRef.current?.audio?.current?.play()
+        })
+        navigator.mediaSession.setActionHandler('pause', () => {
+            playerRef.current?.audio?.current?.pause()
+        })
+        navigator.mediaSession.setActionHandler('seekbackward', () => {
+            const audio = playerRef.current?.audio?.current
+            if (audio) audio.currentTime = Math.max(audio.currentTime - 10, 0)
+        })
+        navigator.mediaSession.setActionHandler('seekforward', () => {
+            const audio = playerRef.current?.audio?.current
+            if (audio) audio.currentTime = Math.min(audio.currentTime + 10, audio.duration)
+        })
 
         if (!intervalRef.current) {
             intervalRef.current = setInterval(() => {
