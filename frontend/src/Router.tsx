@@ -7,19 +7,26 @@ import ComingSoon from './pages/ComingSoon'
 import EpisodeDetail from './pages/EpisodeDetail'
 import RegistrationForm from './pages/RegistrationForm'
 import LoginForm from './pages/LoginForm'
+import SearchPage from './pages/SearchPage'
+import { SearchProvider } from './components/app-searchContext'
 
 export default function Router() {
     return (
         <Routes>
-            <Route element={<AppLayout />}>
+            <Route element={
+                <SearchProvider>
+                    <AppLayout />
+                </SearchProvider>
+            }>
                 <Route path="" element={<Dashboard />} />
                 <Route path='login' element={<LoginForm />}></Route>
                 <Route path="register" element={<RegistrationForm />} />
-                <Route path="episodes/:slug" element={<EpisodeDetail />} /> 
+                <Route path="episodes/:slug" element={<EpisodeDetail />} />
                 <Route path="pages">
                     <Route path="sample" element={<Sample />} />
                     <Route path="feature" element={<ComingSoon />} />
                 </Route>
+                <Route path="search" element={<SearchPage />} />
                 <Route path="*" element={<NotMatch />} />
             </Route>
         </Routes>

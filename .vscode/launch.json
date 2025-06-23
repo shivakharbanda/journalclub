@@ -1,20 +1,38 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        
-        {
-            "name": "Python Debugger: Django",
-            "type": "debugpy",
-            "request": "launch",
-            "args": [
-                "runserver"
-            ],
-            "django": true,
-            "autoStartBrowser": false,
-            "program": "${workspaceFolder}\\backend\\manage.py"
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    /* ----------------------------- BACK-END (Django) ----------------------------- */
+    {
+      "name": "Python Debugger: Django",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/manage.py",
+      "args": ["runserver"],
+      "django": true,
+      "autoStartBrowser": false
+    },
+
+    /* ----------------------------- FRONT-END (React) ----------------------------- */
+    {
+      "name": "React: npm run dev",
+      "type": "pwa-node",           // Requires VS Code “JavaScript Debug” (built-in ≥ v1.75)
+      "request": "launch",
+      "cwd": "${workspaceFolder}/frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ],
+
+  /* ----------------------------- COMPOUND TARGET ----------------------------- */
+  "compounds": [
+    {
+      "name": "Full stack → Django + React",
+      "configurations": [
+        "Python Debugger: Django",
+        "React: npm run dev"
+      ]
+    }
+  ]
 }

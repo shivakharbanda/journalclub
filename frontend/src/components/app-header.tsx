@@ -89,7 +89,7 @@ export function AppHeader({ onSearch, searchValue = '' }: AppHeaderProps) {
                     </div>
 
                     {/* Search Bar - centered and responsive */}
-                    <div className='flex-1 max-w-md mx-4 lg:mx-8'>
+                    <div className='hidden md:block flex-1 max-w-md mx-4 lg:mx-8'>
                         <div className="relative">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
