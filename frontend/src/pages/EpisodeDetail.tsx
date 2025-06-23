@@ -64,27 +64,27 @@ export default function EpisodeDetail() {
                 setDislikeCount(data.dislikes_count || 0)
                 setLiked(data.user_action === 'like')
                 setDisliked(data.user_action === 'dislike')
-                setSaved(data.is_saved  || false)
+                setSaved(data.is_saved || false)
             })
             .catch(console.error)
     }, [slug])
 
     const handleLikeDislike = async (action: 'like' | 'dislike') => {
         if (!episode || isLoading) return
-        
+
         setIsLoading(true)
         const isCurrentAction = (action === 'like' && liked) || (action === 'dislike' && disliked)
-        
+
         try {
             if (isCurrentAction) {
                 // Remove the current action
                 await fetcher(`/episode/${episode.slug}/like-dislike/`, {
                     method: 'DELETE',
-                    body: JSON.stringify({  
+                    body: JSON.stringify({
                         action: action
                     })
                 })
-                
+
                 if (action === 'like') {
                     setLiked(false)
                     setLikeCount(prev => prev - 1)
@@ -100,7 +100,7 @@ export default function EpisodeDetail() {
                         action: action
                     })
                 })
-                
+
                 if (action === 'like') {
                     if (disliked) {
                         setDisliked(false)
@@ -130,9 +130,9 @@ export default function EpisodeDetail() {
 
     const handleSave = async () => {
         if (!episode || isLoading) return
-        
+
         setIsLoading(true)
-        
+
         try {
             if (saved) {
                 // Remove from saved
@@ -197,13 +197,19 @@ export default function EpisodeDetail() {
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30"></div>
                                     </div>
-                                    
+
                                     {/* Audio Player moved here */}
                                     <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 pb-4 sm:pb-6">
-                                        <EpisodeAudio url={episode.audio_url} episodeSlug={episode.slug} />
+                                        <EpisodeAudio
+                                            url={episode.audio_url}
+                                            episodeSlug={episode.slug}
+                                            title={episode.title}
+                                            imageUrl={episode.image_url}
+                                        />
+
                                     </div>
                                 </div>
-                                
+
                                 <div className="p-6 sm:p-8 space-y-4">
                                     {/* Title and Date */}
                                     <div className="space-y-1">
@@ -216,45 +222,42 @@ export default function EpisodeDetail() {
                                     {/* Engagement Buttons */}
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center space-x-6">
-                                            <button 
+                                            <button
                                                 onClick={handleLike}
-                                                className={`flex items-center space-x-2 transition-colors duration-150 ${
-                                                    liked 
-                                                        ? 'text-blue-400' 
+                                                className={`flex items-center space-x-2 transition-colors duration-150 ${liked
+                                                        ? 'text-blue-400'
                                                         : 'text-muted-foreground hover:text-foreground'
-                                                }`}
+                                                    }`}
                                             >
                                                 <ThumbsUp className={`h-5 w-5 ${liked ? 'fill-current' : ''}`} />
                                                 <span>{likeCount}</span>
                                             </button>
-                                            
-                                            <button 
+
+                                            <button
                                                 onClick={handleDislike}
-                                                className={`flex items-center space-x-2 transition-colors duration-150 ${
-                                                    disliked 
-                                                        ? 'text-red-400' 
+                                                className={`flex items-center space-x-2 transition-colors duration-150 ${disliked
+                                                        ? 'text-red-400'
                                                         : 'text-muted-foreground hover:text-foreground'
-                                                }`}
+                                                    }`}
                                             >
                                                 <ThumbsDown className={`h-5 w-5 ${disliked ? 'fill-current' : ''}`} />
                                                 <span>{dislikeCount}</span>
                                             </button>
                                         </div>
-                                        
+
                                         <div className="flex items-center space-x-4">
-                                            <button 
+                                            <button
                                                 onClick={handleSave}
-                                                className={`flex items-center space-x-2 transition-colors duration-150 ${
-                                                    saved 
-                                                        ? 'text-yellow-400' 
+                                                className={`flex items-center space-x-2 transition-colors duration-150 ${saved
+                                                        ? 'text-yellow-400'
                                                         : 'text-muted-foreground hover:text-foreground'
-                                                }`}
+                                                    }`}
                                             >
                                                 <Bookmark className={`h-5 w-5 ${saved ? 'fill-current' : ''}`} />
                                                 <span>Save</span>
                                             </button>
-                                            
-                                            <button 
+
+                                            <button
                                                 onClick={handleShare}
                                                 className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors duration-150"
                                             >
@@ -282,7 +285,7 @@ export default function EpisodeDetail() {
 
                         {/* Comments Section */}
                         <Comments
-                            objectType="episode" 
+                            objectType="episode"
                             objectId={episode.id}
                             className="mt-10"
                         />

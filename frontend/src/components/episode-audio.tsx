@@ -7,9 +7,12 @@ import styles from '@/styles/episode-audio.module.css'
 type Props = {
     url: string
     episodeSlug: string
+    title: string
+    imageUrl: string
+    artist?: string
 }
 
-export default function EpisodeAudio({ url, episodeSlug }: Props) {
+export default function EpisodeAudio({ url, episodeSlug, title, imageUrl, artist = "Podcast" }: Props) {
     const playerRef = useRef<AudioPlayer>(null)
     const lastPercentSent = useRef<number>(0)
     const intervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -21,7 +24,9 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
     useEffect(() => {
         async function fetchProgress() {
             try {
-                const progress = await fetcher<{ position_seconds: number }>("/listen-progress/?episode_slug=" + episodeSlug)
+                const progress = await fetcher<{ position_seconds: number }>(
+                    "/listen-progress/?episode_slug=" + episodeSlug
+                )
                 setStartFrom(progress.position_seconds || 0)
             } catch (err) {
                 console.error("Failed to load progress:", err)
@@ -34,6 +39,34 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
             if (intervalRef.current) clearInterval(intervalRef.current)
         }
     }, [episodeSlug])
+
+    useEffect(() => {
+        if (!('mediaSession' in navigator)) return
+
+        navigator.mediaSession.metadata = new window.MediaMetadata({
+            title,
+            artist,
+            album: "Podcast Series",
+            artwork: [
+                { src: imageUrl, sizes: '512x512', type: 'image/png' }
+            ]
+        })
+
+        navigator.mediaSession.setActionHandler('play', () => {
+            playerRef.current?.audio?.current?.play()
+        })
+        navigator.mediaSession.setActionHandler('pause', () => {
+            playerRef.current?.audio?.current?.pause()
+        })
+        navigator.mediaSession.setActionHandler('seekbackward', () => {
+            const audio = playerRef.current?.audio?.current
+            if (audio) audio.currentTime = Math.max(audio.currentTime - 10, 0)
+        })
+        navigator.mediaSession.setActionHandler('seekforward', () => {
+            const audio = playerRef.current?.audio?.current
+            if (audio) audio.currentTime = Math.min(audio.currentTime + 10, audio.duration)
+        })
+    }, [title, imageUrl, artist])
 
     const saveProgress = async (position: number, completed = false) => {
         const audio = playerRef.current?.audio?.current
@@ -109,17 +142,11 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
 
     return (
         <div className="w-full mt-4 relative">
-            {/* Liquid glass container */}
             <div className={styles.liquidGlassPlayer}>
-                {/* Background distortion layer */}
                 <div className="absolute inset-0 overflow-hidden rounded-xl">
                     <div className={`${styles.liquidGlassDistortion} absolute inset-[-25px]`} />
                 </div>
-                
-                {/* Glass effect layer */}
                 <div className={`${styles.liquidGlassEffect} absolute inset-0 rounded-xl`} />
-                
-                {/* Audio player content */}
                 <div className="relative z-10">
                     <AudioPlayer
                         ref={playerRef}
@@ -132,8 +159,8 @@ export default function EpisodeAudio({ url, episodeSlug }: Props) {
                         showSkipControls={false}
                         showDownloadProgress={true}
                         progressJumpSteps={{
-                            backward: 10000, // 10 seconds
-                            forward: 10000   // 10 seconds
+                            backward: 10000,
+                            forward: 10000
                         }}
                         customProgressBarSection={[
                             RHAP_UI.CURRENT_TIME,
